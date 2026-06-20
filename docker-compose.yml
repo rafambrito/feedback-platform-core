@@ -1,0 +1,86 @@
+services:
+  localstack:
+    image: localstack/localstack:3.8
+    container_name: fiap4-localstack
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      SERVICES: dynamodb,sqs,events
+      AWS_DEFAULT_REGION: us-east-1
+      EDGE_PORT: 4566
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:4566/_localstack/health').read()\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - fiap4-network
+
+  feedback-collector:
+    build:
+      context: ./feedback-collector
+    container_name: fiap4-feedback-collector
+    ports:
+      - "8080:8080"
+    environment:
+      AWS_REGION: us-east-1
+      AWS_DYNAMODB_ENDPOINT_OVERRIDE: http://localstack:4566
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8080'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - fiap4-network
+
+  feedback-notifier:
+    build:
+      context: ./feedback-notifier
+    container_name: fiap4-feedback-notifier
+    ports:
+      - "8081:8081"
+    environment:
+      AWS_REGION: us-east-1
+      AWS_SQS_ENDPOINT_OVERRIDE: http://localstack:4566
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8081'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - fiap4-network
+
+  feedback-reporter:
+    build:
+      context: ./feedback-reporter
+    container_name: fiap4-feedback-reporter
+    ports:
+      - "8082:8082"
+    environment:
+      AWS_REGION: us-east-1
+      AWS_DYNAMODB_ENDPOINT_OVERRIDE: http://localstack:4566
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/8082'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    depends_on:
+      localstack:
+        condition: service_healthy
+    networks:
+      - fiap4-network
+
+networks:
+  fiap4-network:
+    driver: bridge

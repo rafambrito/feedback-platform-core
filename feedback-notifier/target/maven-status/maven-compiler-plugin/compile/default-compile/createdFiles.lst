@@ -1,0 +1,3 @@
+com/feedback/platform/notifier/service/FeedbackNotificationConsumer.class
+com/feedback/platform/notifier/dto/FeedbackEventDTO.class
+com/feedback/platform/notifier/config/SqsConfig.class

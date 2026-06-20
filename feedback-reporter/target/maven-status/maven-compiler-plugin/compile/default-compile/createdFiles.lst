@@ -1,0 +1,8 @@
+com/feedback/platform/reporter/dto/ProfessorReportResponseDTO.class
+com/feedback/platform/reporter/dto/FeedbackReportItemDTO.class
+com/feedback/platform/reporter/dto/CursoReportResponseDTO.class
+com/feedback/platform/reporter/repository/dynamodb/DynamoDBFeedbackRepository.class
+com/feedback/platform/reporter/config/DynamoDBConfig.class
+com/feedback/platform/reporter/domain/FeedbackRecord.class
+com/feedback/platform/reporter/repository/FeedbackRepository.class
+com/feedback/platform/reporter/resource/FeedbackReporterResource.class

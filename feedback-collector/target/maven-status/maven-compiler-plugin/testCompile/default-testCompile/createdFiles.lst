@@ -1,0 +1,9 @@
+com/feedback/platform/resource/FeedbackResourceTest.class
+com/feedback/platform/event/EventBridgeEventPublisherTest.class
+com/feedback/platform/collector/service/FeedbackServiceImplTest.class
+com/feedback/platform/collector/service/FeedbackServiceImplTest$2.class
+com/feedback/platform/service/FeedbackServiceImplTest.class
+com/feedback/platform/collector/service/FeedbackServiceImplTest$1.class
+com/feedback/platform/domain/UsuarioTest.class
+com/feedback/platform/integration/DynamoDbLocalResource.class
+com/feedback/platform/domain/FeedbackTest.class
