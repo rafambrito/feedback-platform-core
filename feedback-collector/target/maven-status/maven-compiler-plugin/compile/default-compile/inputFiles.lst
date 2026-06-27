@@ -1,13 +1,16 @@
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/domain/TipoUsuario.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/config/AWSConfig.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/lambda/dto/FeedbackRequestDTO.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/event/EventPublisher.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/dto/FeedbackResponseDTO.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/domain/Criticidade.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/lambda/repository/LambdaFeedbackRepository.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/resource/RestExceptionHandler.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/domain/Usuario.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/repository/dynamodb/DynamoDBFeedbackRepository.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/dto/FeedbackRequestDTO.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/domain/Feedback.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/lambda/CollectorLambdaHandler.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/service/FeedbackService.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/repository/FeedbackRepository.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/service/impl/FeedbackServiceImpl.java

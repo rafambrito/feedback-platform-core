@@ -1,0 +1,25 @@
+# Pastas de build do Maven
+target/
+
+# Pastas de ambiente/IDE
+.settings/
+.project
+.classpath
+.idea/
+*.iml
+*.iws
+.vscode/
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.bak
+*~
+
+# Pastas de ambiente local (ex: LocalStack)
+.localstack/
+*.docker-compose.override.yml
+
+# Arquivos de sistema operacional
+.DS_Store
+Thumbs.db
