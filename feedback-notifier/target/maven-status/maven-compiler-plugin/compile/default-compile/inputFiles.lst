@@ -1,3 +1,11 @@
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/service/impl/NotificationServiceImpl.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/service/FeedbackNotificationConsumer.java
-/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/config/SqsConfig.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/resource/NotificationResource.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/domain/Notificacao.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/dto/FeedbackEventDTO.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/repository/NotificationRepository.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/config/AWSConfig.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/dto/NotificationResponseDTO.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/repository/dynamodb/DynamoDBNotificationRepository.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/resource/RestExceptionHandler.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/service/NotificationService.java

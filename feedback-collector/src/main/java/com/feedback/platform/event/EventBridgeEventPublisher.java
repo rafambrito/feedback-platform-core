@@ -17,7 +17,7 @@ public class EventBridgeEventPublisher implements EventPublisher {
     private static final Logger LOG = Logger.getLogger(EventBridgeEventPublisher.class);
     private static final String SOURCE = "com.feedback.platform";
     private static final String DETAIL_TYPE = "FeedbackCriticoEvent";
-    private static final String EVENT_BUS_NAME = "feedback-events";
+    private static final String EVENT_BUS_NAME = "default";
 
     private final EventBridgeClient eventBridgeClient;
     private final ObjectMapper objectMapper;
@@ -34,7 +34,8 @@ public class EventBridgeEventPublisher implements EventPublisher {
             String detail = objectMapper.writeValueAsString(Map.of(
                     "feedbackId", feedbackId,
                     "alunoId", alunoId,
-                    "professorId", professorId
+                    "professorId", professorId,
+                    "urgencia", "ALTA"
             ));
 
             PutEventsRequestEntry entry = PutEventsRequestEntry.builder()

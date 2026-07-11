@@ -44,12 +44,13 @@ class EventBridgeEventPublisherTest {
         assertEquals(1, sent.entries().size());
 
         var entry = sent.entries().get(0);
-        assertEquals("feedback-events", entry.eventBusName());
+        assertEquals("default", entry.eventBusName());
         assertEquals("com.feedback.platform", entry.source());
         assertEquals("FeedbackCriticoEvent", entry.detailType());
         assertTrue(entry.detail().contains("\"feedbackId\":\"fb-1\""));
         assertTrue(entry.detail().contains("\"alunoId\":\"aluno-1\""));
         assertTrue(entry.detail().contains("\"professorId\":\"prof-1\""));
+        assertTrue(entry.detail().contains("\"urgencia\":\"ALTA\""));
     }
 
     @Test

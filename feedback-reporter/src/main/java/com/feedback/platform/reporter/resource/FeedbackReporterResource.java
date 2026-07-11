@@ -1,44 +1,34 @@
 package com.feedback.platform.reporter.resource;
 
-import com.feedback.platform.reporter.domain.FeedbackRecord;
 import com.feedback.platform.reporter.dto.CursoReportResponseDTO;
-import com.feedback.platform.reporter.dto.FeedbackReportItemDTO;
 import com.feedback.platform.reporter.dto.ProfessorReportResponseDTO;
-import com.feedback.platform.reporter.repository.FeedbackRepository;
+import com.feedback.platform.reporter.service.FeedbackReportService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-
-import java.util.List;
 
 @Path("/reports")
 @Produces(MediaType.APPLICATION_JSON)
 @RequestScoped
 public class FeedbackReporterResource {
 
-    private final FeedbackRepository feedbackRepository;
+    private final FeedbackReportService feedbackReportService;
 
     @Inject
-    public FeedbackReporterResource(FeedbackRepository feedbackRepository) {
-        this.feedbackRepository = feedbackRepository;
+    public FeedbackReporterResource(FeedbackReportService feedbackReportService) {
+        this.feedbackReportService = feedbackReportService;
     }
 
     @GET
     @Path("/professor/{professorId}")
     public Response getProfessorReport(@PathParam("professorId") String professorId) {
-        List<FeedbackRecord> feedbacks = feedbackRepository.findByProfessorId(professorId);
-        List<FeedbackReportItemDTO> items = feedbacks.stream().map(this::toDto).toList();
-
-        ProfessorReportResponseDTO response = new ProfessorReportResponseDTO(
-                professorId,
-                items.size(),
-                items
-        );
+        ProfessorReportResponseDTO response = feedbackReportService.getProfessorReport(professorId);
 
         return Response.ok(response).build();
     }
@@ -46,28 +36,21 @@ public class FeedbackReporterResource {
     @GET
     @Path("/curso/{cursoId}")
     public Response getCursoReport(@PathParam("cursoId") String cursoId) {
-        List<FeedbackRecord> feedbacks = feedbackRepository.findByCursoId(cursoId);
-        List<FeedbackReportItemDTO> items = feedbacks.stream().map(this::toDto).toList();
-
-        CursoReportResponseDTO response = new CursoReportResponseDTO(
-                cursoId,
-                items.size(),
-                items
-        );
+        CursoReportResponseDTO response = feedbackReportService.getCursoReport(cursoId);
 
         return Response.ok(response).build();
     }
 
-    private FeedbackReportItemDTO toDto(FeedbackRecord feedback) {
-        return new FeedbackReportItemDTO(
-                feedback.id(),
-                feedback.cursoId(),
-                feedback.alunoId(),
-                feedback.professorId(),
-                feedback.nota(),
-                feedback.comentario(),
-                feedback.criticidade(),
-                feedback.dataCriacao()
-        );
+    @GET
+    @Path("/weekly")
+    public Response getWeeklyCourseReport(@QueryParam("courseId") String courseId) {
+        if (courseId == null || courseId.isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST)
+                    .entity("courseId é obrigatório").build();
+        }
+
+        CursoReportResponseDTO response = feedbackReportService.getWeeklyCourseReport(courseId);
+
+        return Response.ok(response).build();
     }
 }

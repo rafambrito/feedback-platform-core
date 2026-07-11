@@ -1,0 +1,230 @@
+{
+  "specVersion": "1.0.0",
+  "name": "cognito-jwt-claims-contract",
+  "description": "Contrato de claims para tokens JWT aceitos pelos servicos feedback-collector, feedback-notifier e feedback-reporter.",
+  "tokenType": "JWT",
+  "issuer": {
+    "claim": "iss",
+    "required": true,
+    "validation": {
+      "type": "exact-match-by-environment",
+      "allowedValuesByEnv": {
+        "dev": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_DEVPOOL",
+        "hml": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_HMLPOOL",
+        "prd": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PRDPOOL"
+      }
+    }
+  },
+  "audience": {
+    "claim": "aud",
+    "required": true,
+    "validation": {
+      "type": "one-of",
+      "allowedValuesByEnv": {
+        "dev": [
+          "feedback-platform-api-dev"
+        ],
+        "hml": [
+          "feedback-platform-api-hml"
+        ],
+        "prd": [
+          "feedback-platform-api-prd"
+        ]
+      }
+    }
+  },
+  "subject": {
+    "claim": "sub",
+    "required": true,
+    "validation": {
+      "type": "non-empty-string",
+      "minLength": 1
+    }
+  },
+  "authorization": {
+    "claims": [
+      {
+        "name": "scope",
+        "required": false,
+        "format": "space-delimited-string",
+        "example": "feedback:write report:read"
+      },
+      {
+        "name": "groups",
+        "required": false,
+        "format": "array-of-strings",
+        "example": [
+          "ADMIN",
+          "SYSTEM"
+        ]
+      }
+    ],
+    "rule": "at-least-one-required",
+    "validation": "o token deve conter pelo menos um entre scope ou groups"
+  },
+  "timeClaims": {
+    "required": [
+      "exp"
+    ],
+    "recommended": [
+      "iat",
+      "nbf"
+    ],
+    "validation": {
+      "exp": "must-be-future-unix-time",
+      "iat": "if-present-must-be-unix-time",
+      "nbf": "if-present-must-be-unix-time"
+    }
+  },
+  "recommendedClaims": [
+    {
+      "name": "token_use",
+      "expected": [
+        "access"
+      ],
+      "note": "Recomendado para diferenciar de id_token em Cognito"
+    },
+    {
+      "name": "client_id",
+      "note": "Recomendado para fluxo machine-to-machine"
+    },
+    {
+      "name": "jti",
+      "note": "Recomendado para rastreabilidade"
+    },
+    {
+      "name": "tenant_id",
+      "note": "Recomendado para isolamento multi-tenant"
+    }
+  ],
+  "servicePolicies": {
+    "feedback-collector": {
+      "publicEndpoints": [
+        "POST /feedback"
+      ],
+      "protectedEndpoints": [
+        {
+          "endpoint": "GET /feedback/{id}",
+          "acceptedScopes": [
+            "feedback:read",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "CLIENTE"
+          ]
+        }
+      ]
+    },
+    "feedback-notifier": {
+      "protectedEndpoints": [
+        {
+          "endpoint": "POST /notifications/urgent",
+          "acceptedScopes": [
+            "notification:write",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "SYSTEM"
+          ]
+        },
+        {
+          "endpoint": "GET /notifications/{id}",
+          "acceptedScopes": [
+            "notification:read",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "SYSTEM"
+          ]
+        },
+        {
+          "endpoint": "POST /notifications/test/simulate",
+          "acceptedScopes": [
+            "notification:write",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "SYSTEM"
+          ],
+          "environmentRestriction": [
+            "dev",
+            "hml"
+          ]
+        }
+      ]
+    },
+    "feedback-reporter": {
+      "protectedEndpoints": [
+        {
+          "endpoint": "GET /reports/professor/{professorId}",
+          "acceptedScopes": [
+            "report:read",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "PROFESSOR",
+            "SYSTEM"
+          ]
+        },
+        {
+          "endpoint": "GET /reports/curso/{cursoId}",
+          "acceptedScopes": [
+            "report:read",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "PROFESSOR",
+            "SYSTEM"
+          ]
+        },
+        {
+          "endpoint": "GET /reports/weekly?courseId={id}",
+          "acceptedScopes": [
+            "report:read",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "PROFESSOR",
+            "SYSTEM"
+          ]
+        }
+      ]
+    }
+  },
+  "payloadExamples": {
+    "userToken": {
+      "iss": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PRDPOOL",
+      "aud": "feedback-platform-api-prd",
+      "sub": "6a11d7d1-64dc-4d60-a061-3e32d3f773d1",
+      "exp": 1793719200,
+      "iat": 1793715600,
+      "scope": "feedback:write report:read",
+      "groups": [
+        "CLIENTE"
+      ],
+      "token_use": "access",
+      "tenant_id": "tenant-fiap"
+    },
+    "systemToken": {
+      "iss": "https://cognito-idp.us-east-1.amazonaws.com/us-east-1_PRDPOOL",
+      "aud": "feedback-platform-api-prd",
+      "sub": "system-notifier-client",
+      "exp": 1793719200,
+      "iat": 1793715600,
+      "scope": "notification:write notification:read report:read",
+      "groups": [
+        "SYSTEM"
+      ],
+      "token_use": "access",
+      "client_id": "notifier-service-client",
+      "tenant_id": "tenant-fiap"
+    }
+  }
+}
