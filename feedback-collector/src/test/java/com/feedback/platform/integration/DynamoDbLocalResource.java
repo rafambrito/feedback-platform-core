@@ -48,7 +48,10 @@ public class DynamoDbLocalResource implements QuarkusTestResourceLifecycleManage
         createFeedbackTable(endpoint);
 
         // Propriedade devolvida é injetada no config do Quarkus com maior prioridade
-        return Map.of("aws.dynamodb.endpoint.override", endpoint);
+        return Map.of(
+            "aws.dynamodb.endpoint.override", endpoint,
+            "aws.eventbridge.endpoint.override", "http://localhost:4010"
+        );
     }
 
     @Override

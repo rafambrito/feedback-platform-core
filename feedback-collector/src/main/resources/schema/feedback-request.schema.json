@@ -5,41 +5,37 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "professorId",
     "cursoId",
+    "alunoId",
+    "professorId",
     "nota",
-    "comentario",
-    "urgencia",
-    "timestamp"
+    "comentario"
   ],
   "properties": {
-    "professorId": {
+    "cursoId": {
       "type": "string",
       "minLength": 1,
       "maxLength": 100
     },
-    "cursoId": {
+    "alunoId": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    },
+    "professorId": {
       "type": "string",
       "minLength": 1,
       "maxLength": 100
     },
     "nota": {
       "type": "integer",
-      "minimum": 1,
-      "maximum": 5
+      "minimum": 0,
+      "maximum": 10
     },
     "comentario": {
       "type": "string",
-      "minLength": 3,
+      "minLength": 1,
       "maxLength": 1000
-    },
-    "urgencia": {
-      "type": "string",
-      "enum": ["BAIXA", "MEDIA", "ALTA", "CRITICA"]
-    },
-    "timestamp": {
-      "type": "string",
-      "format": "date-time"
     }
   }
 }

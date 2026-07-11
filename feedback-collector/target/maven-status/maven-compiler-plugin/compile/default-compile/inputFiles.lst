@@ -10,6 +10,7 @@
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/adapters/security/TokenValidator.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/domain/Usuario.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/repository/dynamodb/DynamoDBFeedbackRepository.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/resource/ConstraintViolationExceptionHandler.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/adapters/security/SecurityInterceptor.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/domain/Feedback.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/main/java/com/feedback/platform/lambda/CollectorLambdaHandler.java

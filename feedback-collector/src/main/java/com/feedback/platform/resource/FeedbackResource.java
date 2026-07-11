@@ -34,7 +34,14 @@ public class FeedbackResource {
     public Response getFeedback(@PathParam("id") String id) {
         FeedbackResponseDTO response = feedbackService.buscarPorId(id);
         if (response == null) {
-            return Response.status(Response.Status.NOT_FOUND).build();
+            var payload = java.util.Map.of(
+                    "error_code", "NOT_FOUND",
+                    "message", "Feedback nao encontrado"
+            );
+            return Response.status(Response.Status.NOT_FOUND)
+                    .type(MediaType.APPLICATION_JSON)
+                    .entity(payload)
+                    .build();
         }
         return Response.ok(response).build();
     }

@@ -1,3 +1,4 @@
+com/feedback/platform/resource/ConstraintViolationExceptionHandler.class
 com/feedback/platform/service/impl/FeedbackServiceImpl.class
 com/feedback/platform/domain/TipoUsuario.class
 com/feedback/platform/config/AWSConfig.class

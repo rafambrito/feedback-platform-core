@@ -26,6 +26,64 @@ Apos iniciar a aplicacao, acesse a interface interativa:
 - 🌐 http://localhost:8080/swagger-ui
 - 🌐 http://localhost:8080/openapi
 
+## 📥 Contrato do endpoint
+
+Endpoint: `POST /feedback`
+
+Payload esperado:
+
+```json
+{
+	"cursoId": "CURSO-01",
+	"alunoId": "ALUNO-01",
+	"professorId": "PROF-01",
+	"nota": 7,
+	"comentario": "Aula muito clara"
+}
+```
+
+Regras de validacao:
+- `cursoId`, `alunoId`, `professorId`, `comentario`: obrigatorios e nao vazios
+- `nota`: inteiro entre 0 e 10
+- Campos extras sao rejeitados
+
+Schema JSON de referencia:
+- `src/main/resources/schema/feedback-request.schema.json`
+
+### Respostas HTTP
+- `201 Created`: feedback criado com sucesso
+- `400 Bad Request`: payload invalido
+- `401 Unauthorized`: token ausente ou invalido
+- `404 Not Found`: feedback nao encontrado em `GET /feedback/{id}`
+
+Exemplo de erro (`400`):
+
+```json
+{
+	"error_code": "BAD_REQUEST",
+	"message": "Dados de entrada invalidos"
+}
+```
+
+Exemplo de erro (`401`):
+
+```json
+{
+	"error_code": "TOKEN_INVALID",
+	"message": "Authorization Bearer token is required",
+	"trace_id": "..."
+}
+```
+
+Exemplo de erro (`404`):
+
+```json
+{
+	"error_code": "NOT_FOUND",
+	"message": "Feedback nao encontrado"
+}
+```
+
 ## 🧪 Executando testes
 Para rodar a suite completa de testes (incluindo integracao com DynamoDB local via Testcontainers):
 
