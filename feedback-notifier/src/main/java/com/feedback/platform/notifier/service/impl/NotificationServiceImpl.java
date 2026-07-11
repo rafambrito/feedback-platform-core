@@ -2,8 +2,9 @@ package com.feedback.platform.notifier.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
-import com.feedback.platform.notifier.dto.FeedbackEventDTO;
+import com.feedback.platform.notifier.repository.NotificationSender;
 import com.feedback.platform.notifier.repository.NotificationRepository;
 import com.feedback.platform.notifier.service.NotificationService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -12,6 +13,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import org.jboss.logging.Logger;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Set;
 import java.util.UUID;
@@ -23,26 +25,29 @@ public class NotificationServiceImpl implements NotificationService {
     private static final Logger LOG = Logger.getLogger(NotificationServiceImpl.class);
 
     private final NotificationRepository repository;
+    private final NotificationSender notificationSender;
     private final ObjectMapper objectMapper;
     private final Validator validator;
 
     @Inject
     public NotificationServiceImpl(
             NotificationRepository repository,
+            NotificationSender notificationSender,
             ObjectMapper objectMapper,
             Validator validator) {
         this.repository = repository;
+        this.notificationSender = notificationSender;
         this.objectMapper = objectMapper;
         this.validator = validator;
     }
 
     @Override
-    public Notificacao procesarNotificacao(FeedbackEventDTO event) {
+    public Notificacao processarNotificacao(UrgencyNotification event) {
         LOG.infof("Processando notificação para professor: %s (urgência: %s)",
                 event.professorId(), event.urgencia());
 
         // Validar evento
-        Set<ConstraintViolation<FeedbackEventDTO>> violations = validator.validate(event);
+        Set<ConstraintViolation<UrgencyNotification>> violations = validator.validate(event);
         if (!violations.isEmpty()) {
             String details = violations.stream()
                     .map(v -> v.getPropertyPath() + " " + v.getMessage())
@@ -50,8 +55,7 @@ public class NotificationServiceImpl implements NotificationService {
             throw new IllegalArgumentException("Validação falhou: " + details);
         }
 
-        // Construir notificação
-        String notificacaoId = UUID.randomUUID().toString();
+        String notificacaoId = gerarChaveIdempotencia(event);
         Notificacao notificacao = new Notificacao(
                 notificacaoId,
                 event.feedbackId(),
@@ -66,21 +70,23 @@ public class NotificationServiceImpl implements NotificationService {
                 null
         );
 
-        // Persistir
-        Notificacao notificacaoPersistida = repository.salvar(notificacao);
-        LOG.infof("Notificação %s persistida com sucesso", notificacaoId);
-
-        // Enviar via SES (delegado ao repository)
-        try {
-            repository.enviarViaSES(notificacaoPersistida);
-            LOG.infof("Notificação %s enviada via SES", notificacaoId);
-        } catch (Exception e) {
-            LOG.errorf(e, "Falha ao enviar notificação %s via SES", notificacaoId);
-            // Atualizar status para FALHA, mas continuar
-            repository.atualizarStatus(notificacaoId, Notificacao.StatusNotificacao.FALHA);
+        Notificacao notificacaoPersistida = repository.salvarSeAusente(notificacao);
+        if (notificacaoPersistida.status() == Notificacao.StatusNotificacao.ENVIADA) {
+            LOG.infof("Notificação idempotente já enviada. id=%s", notificacaoId);
+            return notificacaoPersistida;
         }
 
-        return notificacaoPersistida;
+        // Enviar via SES
+        try {
+            notificationSender.enviar(notificacaoPersistida);
+            repository.atualizarStatus(notificacaoId, Notificacao.StatusNotificacao.ENVIADA);
+            LOG.infof("Notificação %s enviada via SES", notificacaoId);
+            return repository.buscarPorId(notificacaoId);
+        } catch (Exception e) {
+            LOG.errorf(e, "Falha ao enviar notificação %s via SES", notificacaoId);
+            repository.atualizarStatus(notificacaoId, Notificacao.StatusNotificacao.FALHA);
+            return repository.buscarPorId(notificacaoId);
+        }
     }
 
     @Override
@@ -92,12 +98,17 @@ public class NotificationServiceImpl implements NotificationService {
     public void simularRecebimento(String messageBody) {
         LOG.infof("Simulando recebimento de mensagem: %s", messageBody);
         try {
-            FeedbackEventDTO event = objectMapper.readValue(messageBody, FeedbackEventDTO.class);
-            procesarNotificacao(event);
+            UrgencyNotification event = objectMapper.readValue(messageBody, UrgencyNotification.class);
+            processarNotificacao(event);
         } catch (JsonProcessingException e) {
             LOG.errorf(e, "Falha ao desserializar evento: %s", messageBody);
             throw new RuntimeException("Desserialização falhou", e);
         }
+    }
+
+    private String gerarChaveIdempotencia(UrgencyNotification event) {
+        String raw = event.feedbackId() + "|" + event.professorId() + "|" + event.urgencia();
+        return UUID.nameUUIDFromBytes(raw.getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     private String gerarEmailProfessor(String professorId) {
@@ -114,7 +125,7 @@ public class NotificationServiceImpl implements NotificationService {
         };
     }
 
-    private String construirCorpo(FeedbackEventDTO event) {
+    private String construirCorpo(UrgencyNotification event) {
         return String.format(
                 """
                         Olá Professor %s,

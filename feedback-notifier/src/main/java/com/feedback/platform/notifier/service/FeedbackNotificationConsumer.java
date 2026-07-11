@@ -3,7 +3,7 @@ package com.feedback.platform.notifier.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.feedback.platform.notifier.dto.FeedbackEventDTO;
+import com.feedback.platform.dto.UrgencyNotification;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import io.quarkus.scheduler.Scheduled;
@@ -71,13 +71,13 @@ public class FeedbackNotificationConsumer {
         LOG.info("Mensagem recebida: " + messageBody);
 
         try {
-            FeedbackEventDTO feedbackEventDTO = parseFeedbackEvent(messageBody);
+            UrgencyNotification feedbackEventDTO = parseFeedbackEvent(messageBody);
 
             LOG.infof("Processando feedback crítico: %s para professor: %s",
                     feedbackEventDTO.feedbackId(),
                     feedbackEventDTO.professorId());
 
-            notificationService.procesarNotificacao(feedbackEventDTO);
+            notificationService.processarNotificacao(feedbackEventDTO);
 
         } catch (JsonProcessingException exception) {
             LOG.errorf(exception,
@@ -111,7 +111,7 @@ public class FeedbackNotificationConsumer {
                 .queueUrl();
     }
 
-    private FeedbackEventDTO parseFeedbackEvent(String messageBody) throws JsonProcessingException {
+    private UrgencyNotification parseFeedbackEvent(String messageBody) throws JsonProcessingException {
         if (messageBody.contains("\"detail-type\"") && messageBody.contains("\"detail\"")) {
             JsonNode root = objectMapper.readTree(messageBody);
             JsonNode detailNode = root.get("detail");
@@ -121,11 +121,11 @@ public class FeedbackNotificationConsumer {
             }
 
             if (detailNode.isTextual()) {
-                return objectMapper.readValue(detailNode.asText(), FeedbackEventDTO.class);
+                return objectMapper.readValue(detailNode.asText(), UrgencyNotification.class);
             }
 
-            return objectMapper.treeToValue(detailNode, FeedbackEventDTO.class);
+            return objectMapper.treeToValue(detailNode, UrgencyNotification.class);
         }
-        return objectMapper.readValue(messageBody, FeedbackEventDTO.class);
+        return objectMapper.readValue(messageBody, UrgencyNotification.class);
     }
 }

@@ -5,11 +5,11 @@ import com.feedback.platform.notifier.domain.Notificacao;
 public interface NotificationRepository {
 
     /**
-     * Salva notificação em DynamoDB
+     * Salva notificação em DynamoDB caso ainda não exista
      * @param notificacao Notificacao a persistir
-     * @return Notificacao persistida
+     * @return Notificacao persistida ou notificação existente
      */
-    Notificacao salvar(Notificacao notificacao);
+    Notificacao salvarSeAusente(Notificacao notificacao);
 
     /**
      * Busca notificação por ID
@@ -24,10 +24,4 @@ public interface NotificationRepository {
      * @param status Novo status
      */
     void atualizarStatus(String id, Notificacao.StatusNotificacao status);
-
-    /**
-     * Envia notificação via SES
-     * @param notificacao Notificacao a enviar
-     */
-    void enviarViaSES(Notificacao notificacao);
 }

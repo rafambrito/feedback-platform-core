@@ -31,18 +31,23 @@ public class DynamoDBNotificationRepository implements NotificationRepository {
     }
 
     @Override
-    public Notificacao salvar(Notificacao notificacao) {
+    public Notificacao salvarSeAusente(Notificacao notificacao) {
         Map<String, AttributeValue> item = mapearNotificacaoParaItem(notificacao);
 
         PutItemRequest request = PutItemRequest.builder()
                 .tableName(tableName)
                 .item(item)
+                .conditionExpression("attribute_not_exists(#id)")
+                .expressionAttributeNames(Map.of("#id", "id"))
                 .build();
 
         try {
             dynamoDbClient.putItem(request);
             LOG.infof("Notificação %s persistida em DynamoDB", notificacao.id());
             return notificacao;
+        } catch (ConditionalCheckFailedException e) {
+            LOG.infof("Notificação idempotente já existe: %s", notificacao.id());
+            return buscarPorId(notificacao.id());
         } catch (DynamoDbException e) {
             LOG.errorf(e, "Erro ao persistir notificação %s em DynamoDB", notificacao.id());
             throw new RuntimeException("Falha ao persistir notificação", e);
@@ -71,19 +76,37 @@ public class DynamoDBNotificationRepository implements NotificationRepository {
 
     @Override
     public void atualizarStatus(String id, Notificacao.StatusNotificacao status) {
-        UpdateItemRequest request = UpdateItemRequest.builder()
-                .tableName(tableName)
-                .key(Map.of("id", AttributeValue.builder().s(id).build()))
-                .updateExpression("SET #status = :status, #dataAtualizacao = :dataAtualizacao")
+        UpdateItemRequest.Builder requestBuilder = UpdateItemRequest.builder()
+            .tableName(tableName)
+            .key(Map.of("id", AttributeValue.builder().s(id).build()));
+
+        if (status == Notificacao.StatusNotificacao.ENVIADA) {
+            requestBuilder
+                .updateExpression("SET #status = :status, #dataAtualizacao = :dataAtualizacao, #dataEnvio = :dataEnvio")
                 .expressionAttributeNames(Map.of(
-                        "#status", "status",
-                        "#dataAtualizacao", "dataAtualizacao"
+                    "#status", "status",
+                    "#dataAtualizacao", "dataAtualizacao",
+                    "#dataEnvio", "dataEnvio"
                 ))
                 .expressionAttributeValues(Map.of(
-                        ":status", AttributeValue.builder().s(status.name()).build(),
-                        ":dataAtualizacao", AttributeValue.builder().s(Instant.now().toString()).build()
+                    ":status", AttributeValue.builder().s(status.name()).build(),
+                    ":dataAtualizacao", AttributeValue.builder().s(Instant.now().toString()).build(),
+                    ":dataEnvio", AttributeValue.builder().s(Instant.now().toString()).build()
+                ));
+        } else {
+            requestBuilder
+                .updateExpression("SET #status = :status, #dataAtualizacao = :dataAtualizacao")
+                .expressionAttributeNames(Map.of(
+                    "#status", "status",
+                    "#dataAtualizacao", "dataAtualizacao"
                 ))
-                .build();
+                .expressionAttributeValues(Map.of(
+                    ":status", AttributeValue.builder().s(status.name()).build(),
+                    ":dataAtualizacao", AttributeValue.builder().s(Instant.now().toString()).build()
+                ));
+        }
+
+        UpdateItemRequest request = requestBuilder.build();
 
         try {
             dynamoDbClient.updateItem(request);
@@ -92,20 +115,6 @@ public class DynamoDBNotificationRepository implements NotificationRepository {
             LOG.errorf(e, "Erro ao atualizar status da notificação %s", id);
             throw new RuntimeException("Falha ao atualizar status", e);
         }
-    }
-
-    @Override
-    public void enviarViaSES(Notificacao notificacao) {
-        // Mock de envio via SES para desenvolvimento
-        // Em produção, integraria com AWS SES SDK
-        LOG.infof("📧 SES Mock: Enviando email para %s com assunto '%s'",
-                notificacao.email(), notificacao.assunto());
-
-        // Atualizar status para ENVIADA
-        atualizarStatus(notificacao.id(), Notificacao.StatusNotificacao.ENVIADA);
-
-        // Atualizar dataEnvio (nota: DynamoDB não suporta UPDATE com retorno, então é simulado)
-        LOG.infof("📧 Email enviado com sucesso para %s", notificacao.email());
     }
 
     private Map<String, AttributeValue> mapearNotificacaoParaItem(Notificacao notificacao) {

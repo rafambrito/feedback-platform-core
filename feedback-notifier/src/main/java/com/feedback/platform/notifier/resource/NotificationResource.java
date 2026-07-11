@@ -1,11 +1,10 @@
 package com.feedback.platform.notifier.resource;
 
+import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
-import com.feedback.platform.notifier.dto.FeedbackEventDTO;
 import com.feedback.platform.notifier.dto.NotificationResponseDTO;
 import com.feedback.platform.notifier.service.NotificationService;
 import jakarta.inject.Inject;
-import jakarta.validation.Valid;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -34,11 +33,14 @@ public class NotificationResource {
             content = @Content(mediaType = MediaType.APPLICATION_JSON, schema = @Schema(implementation = NotificationResponseDTO.class)))
     @APIResponse(responseCode = "400", description = "Payload inválido")
     @APIResponse(responseCode = "500", description = "Erro interno no servidor")
-    public Response enviarNotificacaoUrgente(@Valid FeedbackEventDTO event) {
+        public Response enviarNotificacaoUrgente(UrgencyNotification event) {
         try {
             LOG.infof("POST /notifications/urgent - Recebido evento para professor: %s", event.professorId());
             
-            Notificacao notificacao = notificationService.procesarNotificacao(event);
+            Notificacao notificacao = notificationService.processarNotificacao(event);
+            if (notificacao == null) {
+                throw new IllegalArgumentException("Payload inválido");
+            }
             NotificationResponseDTO response = mapearParaResponse(notificacao);
             
             return Response.status(Response.Status.CREATED)
@@ -47,12 +49,12 @@ public class NotificationResource {
         } catch (IllegalArgumentException e) {
             LOG.warnf("Validação falhou: %s", e.getMessage());
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", e.getMessage()))
+                    .entity(java.util.Map.of("error", e.getMessage()))
                     .build();
         } catch (Exception e) {
             LOG.errorf(e, "Erro ao processar notificação urgente");
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Erro ao processar notificação"))
+                    .entity(java.util.Map.of("error", "Erro ao processar notificação"))
                     .build();
         }
     }
@@ -77,7 +79,7 @@ public class NotificationResource {
         } catch (Exception e) {
             LOG.errorf(e, "Erro ao buscar notificação %s", id);
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR)
-                    .entity(Map.of("error", "Erro ao buscar notificação"))
+                    .entity(java.util.Map.of("error", "Erro ao buscar notificação"))
                     .build();
         }
     }
@@ -91,11 +93,11 @@ public class NotificationResource {
         try {
             LOG.infof("POST /notifications/test/simulate - Simulando recebimento");
             notificationService.simularRecebimento(messageBody);
-            return Response.ok(Map.of("message", "Simulação processada com sucesso")).build();
+            return Response.ok(java.util.Map.of("message", "Simulação processada com sucesso")).build();
         } catch (Exception e) {
             LOG.errorf(e, "Erro ao simular recebimento");
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity(Map.of("error", e.getMessage()))
+                    .entity(java.util.Map.of("error", e.getMessage()))
                     .build();
         }
     }
@@ -109,14 +111,5 @@ public class NotificationResource {
                 notificacao.dataCriacao(),
                 notificacao.dataEnvio()
         );
-    }
-
-    // Simples mapa para respostas de erro
-    private static class Map {
-        static java.util.Map<String, Object> of(String key, Object value) {
-            var map = new java.util.HashMap<String, Object>();
-            map.put(key, value);
-            return map;
-        }
     }
 }

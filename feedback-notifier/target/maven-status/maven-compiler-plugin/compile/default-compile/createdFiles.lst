@@ -1,9 +1,9 @@
 com/feedback/platform/notifier/config/AWSConfig.class
 com/feedback/platform/notifier/service/NotificationService.class
 com/feedback/platform/notifier/service/FeedbackNotificationConsumer$1.class
+com/feedback/platform/notifier/repository/ses/SesNotificationSender.class
 com/feedback/platform/notifier/repository/NotificationRepository.class
-com/feedback/platform/notifier/resource/NotificationResource$Map.class
-com/feedback/platform/notifier/dto/FeedbackEventDTO.class
+com/feedback/platform/notifier/repository/NotificationSender.class
 com/feedback/platform/notifier/resource/NotificationResource.class
 com/feedback/platform/notifier/dto/NotificationResponseDTO.class
 com/feedback/platform/notifier/service/impl/NotificationServiceImpl.class

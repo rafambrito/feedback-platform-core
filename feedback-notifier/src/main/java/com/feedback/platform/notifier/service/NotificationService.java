@@ -1,7 +1,7 @@
 package com.feedback.platform.notifier.service;
 
+import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
-import com.feedback.platform.notifier.dto.FeedbackEventDTO;
 
 public interface NotificationService {
 
@@ -10,7 +10,7 @@ public interface NotificationService {
      * @param event Evento de feedback com dados de urgência
      * @return Notificacao persistida
      */
-    Notificacao procesarNotificacao(FeedbackEventDTO event);
+    Notificacao processarNotificacao(UrgencyNotification event);
 
     /**
      * Consulta notificação por ID

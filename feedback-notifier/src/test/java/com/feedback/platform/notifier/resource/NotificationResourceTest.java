@@ -1,7 +1,7 @@
 package com.feedback.platform.notifier.resource;
 
+import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
-import com.feedback.platform.notifier.dto.FeedbackEventDTO;
 import com.feedback.platform.notifier.service.NotificationService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
@@ -24,7 +24,7 @@ class NotificationResourceTest {
     @Test
     void testEnviarNotificacaoUrgente_Sucesso() {
         // Arrange
-        FeedbackEventDTO request = new FeedbackEventDTO(
+                UrgencyNotification request = new UrgencyNotification(
                 "feedback-123",
                 "aluno-001",
                 "professor-001",
@@ -45,7 +45,7 @@ class NotificationResourceTest {
                 null
         );
 
-        when(notificationService.procesarNotificacao(any(FeedbackEventDTO.class)))
+        when(notificationService.processarNotificacao(any(UrgencyNotification.class)))
                 .thenReturn(notificacao);
 
         // Act & Assert
@@ -60,7 +60,7 @@ class NotificationResourceTest {
                 .body("feedbackId", equalTo("feedback-123"))
                 .body("status", equalTo("PENDENTE"));
 
-        verify(notificationService, times(1)).procesarNotificacao(any(FeedbackEventDTO.class));
+                verify(notificationService, times(1)).processarNotificacao(any(UrgencyNotification.class));
     }
 
     @Test
