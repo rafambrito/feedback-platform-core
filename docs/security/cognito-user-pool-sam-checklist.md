@@ -76,3 +76,31 @@ Checklist rapido de saida:
 | Token valido sem permissao | API retorna 403 | [ ] |
 
 Resultado esperado: checklist completo, revisado e pronto para guiar a implementacao do arquivo SAM de infraestrutura.
+
+## 7. Matriz de endpoints (T13)
+
+| Servico | Endpoint | Scope sugerido | Groups sugeridos |
+|---|---|---|---|
+| feedback-collector | POST /feedback | feedback:write ou admin | ADMIN, CLIENTE, SYSTEM |
+| feedback-collector | GET /feedback/{id} | feedback:read ou admin | ADMIN, CLIENTE |
+| feedback-notifier | POST /notifications/urgent | notification:write ou admin | ADMIN, SYSTEM |
+| feedback-notifier | GET /notifications/{id} | notification:read ou admin | ADMIN, SYSTEM |
+| feedback-notifier | POST /notifications/test/simulate | notification:write ou admin | ADMIN, SYSTEM |
+| feedback-reporter | GET /reports/professor/{professorId} | report:read ou admin | ADMIN, PROFESSOR, SYSTEM |
+| feedback-reporter | GET /reports/curso/{cursoId} | report:read ou admin | ADMIN, PROFESSOR, SYSTEM |
+| feedback-reporter | GET /reports/weekly?courseId={id} | report:read ou admin | ADMIN, PROFESSOR, SYSTEM |
+| feedback-reporter | GET /reports/weekly?courseId={id}&professorId={id} | report:read ou admin | ADMIN, PROFESSOR, SYSTEM |
+
+## 8. Validacao local (T14)
+
+Comandos padrao da suite JWT:
+
+```bash
+./test-security.sh
+./scripts/e2e/security_jwt_suite.sh
+```
+
+Critério de aceite local:
+- token ausente deve retornar 401
+- token invalido deve retornar 401
+- token valido deve retornar sucesso no endpoint alvo (200 ou 201)

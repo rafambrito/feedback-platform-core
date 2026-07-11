@@ -4,6 +4,7 @@ import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
 import com.feedback.platform.reporter.service.FeedbackReportService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
@@ -15,6 +16,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
+@TestProfile(NoAuthTestProfile.class)
 class FeedbackReporterResourceTest {
 
     @InjectMock

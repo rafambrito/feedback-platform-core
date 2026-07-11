@@ -1,12 +1,13 @@
-/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/FeedbackResourceSecurityTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/adapters/security/TokenValidatorTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/domain/FeedbackTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/event/EventBridgeEventPublisherTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/event/CriticalFeedbackPublicationTest.java
-/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/adapters/security/TokenTestHelper.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/service/FeedbackServiceImplTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/collector/service/FeedbackServiceImplTest.java
-/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/FeedbackResourceTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/NoAuthTestProfile.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/integration/DynamoDbLocalResource.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/domain/UsuarioTest.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/FeedbackResourceSecurityTest.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/SecurityEnabledTestProfile.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/adapters/security/TokenTestHelper.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/FeedbackResourceTest.java

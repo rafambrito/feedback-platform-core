@@ -97,12 +97,29 @@
       "note": "Recomendado para isolamento multi-tenant"
     }
   ],
+  "enforcement": {
+    "runtime": "all three services enforce JWT signature + iss + aud + exp + at-least-one(groups|scope)",
+    "authorization": "fine-grained endpoint scopes/groups are formalized here and should be enforced at API Gateway authorizer",
+    "failureCodes": {
+      "missingOrInvalidToken": 401,
+      "insufficientPermission": 403
+    }
+  },
   "servicePolicies": {
     "feedback-collector": {
-      "publicEndpoints": [
-        "POST /feedback"
-      ],
       "protectedEndpoints": [
+        {
+          "endpoint": "POST /feedback",
+          "acceptedScopes": [
+            "feedback:write",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "CLIENTE",
+            "SYSTEM"
+          ]
+        },
         {
           "endpoint": "GET /feedback/{id}",
           "acceptedScopes": [
@@ -185,6 +202,18 @@
         },
         {
           "endpoint": "GET /reports/weekly?courseId={id}",
+          "acceptedScopes": [
+            "report:read",
+            "admin"
+          ],
+          "acceptedGroups": [
+            "ADMIN",
+            "PROFESSOR",
+            "SYSTEM"
+          ]
+        },
+        {
+          "endpoint": "GET /reports/weekly?courseId={id}&professorId={id}",
           "acceptedScopes": [
             "report:read",
             "admin"

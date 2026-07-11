@@ -1,4 +1,4 @@
-package com.feedback.platform.adapters.security;
+package com.feedback.platform.reporter.adapters.security;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
@@ -16,10 +16,10 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Key;
 import java.text.ParseException;
 import java.time.Clock;
 import java.time.Instant;
-import java.security.Key;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedHashSet;

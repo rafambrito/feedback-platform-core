@@ -5,6 +5,7 @@ import com.feedback.platform.notifier.domain.Notificacao;
 import com.feedback.platform.notifier.service.NotificationService;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
+import io.quarkus.test.junit.TestProfile;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @QuarkusTest
+@TestProfile(NoAuthTestProfile.class)
 class NotificationResourceTest {
 
     @InjectMock
