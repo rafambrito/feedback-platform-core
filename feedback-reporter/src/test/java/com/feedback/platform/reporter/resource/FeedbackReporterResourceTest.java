@@ -1,7 +1,6 @@
 package com.feedback.platform.reporter.resource;
 
-import com.feedback.platform.reporter.dto.CursoReportResponseDTO;
-import com.feedback.platform.reporter.dto.FeedbackReportItemDTO;
+import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
 import com.feedback.platform.reporter.service.FeedbackReportService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -9,7 +8,7 @@ import io.restassured.http.ContentType;
 import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
@@ -23,22 +22,19 @@ class FeedbackReporterResourceTest {
 
     @Test
     void deveRetornarRelatorioSemanalComSucesso() {
-        CursoReportResponseDTO response = new CursoReportResponseDTO(
+        WeeklyCourseReportResponseDTO response = new WeeklyCourseReportResponseDTO(
                 "curso-123",
+                null,
                 1,
-                List.of(new FeedbackReportItemDTO(
-                        "f-1",
-                        "curso-123",
-                        "aluno-1",
-                        "prof-1",
-                        5,
-                        "Ótimo",
-                        "BAIXA",
-                        Instant.parse("2026-07-01T10:00:00Z")
-                ))
+                5.0,
+                1,
+                0,
+                0,
+                Map.of("prof-1", 1L),
+                Instant.parse("2026-07-01T10:00:00Z")
         );
 
-        when(feedbackReportService.getWeeklyCourseReport("curso-123")).thenReturn(response);
+        when(feedbackReportService.getWeeklyCourseReport("curso-123", null)).thenReturn(response);
 
         given()
                 .when()
@@ -46,9 +42,35 @@ class FeedbackReporterResourceTest {
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("cursoId", equalTo("curso-123"))
+                .body("courseId", equalTo("curso-123"))
                 .body("totalFeedbacks", equalTo(1))
-                .body("feedbacks.size()", equalTo(1));
+                .body("altaCount", equalTo(0));
+    }
+
+    @Test
+    void deveRetornarRelatorioSemanalFiltradoPorProfessor() {
+        WeeklyCourseReportResponseDTO response = new WeeklyCourseReportResponseDTO(
+                "curso-123",
+                "prof-1",
+                2,
+                4.5,
+                0,
+                1,
+                1,
+                Map.of("prof-1", 2L),
+                Instant.parse("2026-07-01T10:00:00Z")
+        );
+
+        when(feedbackReportService.getWeeklyCourseReport("curso-123", "prof-1")).thenReturn(response);
+
+        given()
+                .when()
+                .get("/reports/weekly?courseId=curso-123&professorId=prof-1")
+                .then()
+                .statusCode(200)
+                .contentType(ContentType.JSON)
+                .body("courseId", equalTo("curso-123"))
+                .body("professorId", equalTo("prof-1"));
     }
 
     @Test

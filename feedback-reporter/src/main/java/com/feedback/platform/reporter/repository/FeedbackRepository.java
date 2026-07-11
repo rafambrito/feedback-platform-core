@@ -9,4 +9,6 @@ public interface FeedbackRepository {
     List<FeedbackRecord> findByProfessorId(String professorId);
 
     List<FeedbackRecord> findByCursoId(String cursoId);
+
+    List<FeedbackRecord> findByCursoIdAndProfessorId(String cursoId, String professorId);
 }

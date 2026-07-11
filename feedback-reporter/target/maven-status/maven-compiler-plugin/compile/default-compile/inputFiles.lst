@@ -8,3 +8,4 @@
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/dto/ProfessorReportResponseDTO.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/repository/dynamodb/DynamoDBFeedbackRepository.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/resource/FeedbackReporterResource.java
+/home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/dto/WeeklyCourseReportResponseDTO.java

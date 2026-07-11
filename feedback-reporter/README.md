@@ -30,12 +30,30 @@ Aplicacao disponivel em:
 ## 🔎 Endpoints
 - `GET /reports/professor/{professorId}`
 - `GET /reports/curso/{cursoId}`
+- `GET /reports/weekly?courseId={id}`
+- `GET /reports/weekly?courseId={id}&professorId={id}`
 
 ## ☁️ Configuracao (DynamoDB)
 Propriedades principais:
 - `aws.region`
 - `aws.dynamodb.table-name`
 - `aws.dynamodb.endpoint.override` (ex: LocalStack `http://localhost:4566`)
+
+Indices recomendados para performance (T11):
+- `aws.dynamodb.gsi.curso-name`
+- `aws.dynamodb.gsi.professor-name`
+
+Premissas de indice:
+- GSI de curso com partition key `cursoId` (exemplo: `cursoId-index`)
+- GSI de professor com partition key `professorId` (exemplo: `professorId-index`)
+- Quando os GSIs estao configurados, o servico usa `Query` no DynamoDB em vez de `Scan`
+- Se o indice nao existir ou falhar, o servico usa fallback seguro para `Scan`
+
+Contrato semanal:
+- `courseId` e obrigatorio
+- `professorId` e opcional para restringir o relatorio semanal por professor
+- Resposta inclui metricas agregadas (`totalFeedbacks`, `averageNota`, contadores por criticidade)
+	e agrupamento `feedbacksByProfessor`
 
 ## 🧪 Testes e Build
 Compilacao rapida:
