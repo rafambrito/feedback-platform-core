@@ -98,7 +98,7 @@ O `template.yaml` provisiona:
 
 Credenciais padrão de teste:
 
-- usuário: `admin`
+- usuário: `admin@admin.com`
 - senha: `fiap2026brito`
 
 O usuário é criado como permanente via custom resource no deploy. Se quiser sobrescrever em outro ambiente, passe os parâmetros abaixo no deploy:
@@ -118,7 +118,7 @@ aws cognito-idp initiate-auth \
 	--region us-east-2 \
 	--client-id <COGNITO_USER_POOL_CLIENT_ID> \
 	--auth-flow USER_PASSWORD_AUTH \
-	--auth-parameters USERNAME=admin,PASSWORD=fiap2026brito
+	--auth-parameters USERNAME=admin@admin.com,PASSWORD=fiap2026brito
 ```
 
 Use o `AccessToken` retornado no cabeçalho:

@@ -90,11 +90,11 @@ Parameters:
     Description: Validade do Refresh Token (dias) em prd
   DefaultAdminUsername:
     Type: String
-    Default: admin
+    Default: admin@admin.com
     Description: Usuario padrao criado no Cognito para testes manuais da API
   DefaultAdminEmail:
     Type: String
-    Default: admin@feedback-platform.local
+    Default: admin@admin.com
     Description: Email do usuario padrao criado no Cognito
   DefaultAdminPassword:
     Type: String
@@ -697,7 +697,7 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub feedback-platform-user-pool-${StageName}
-      AliasAttributes:
+      UsernameAttributes:
         - email
       AutoVerifiedAttributes:
         - email
