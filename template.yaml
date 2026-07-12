@@ -119,6 +119,7 @@ Resources:
       Name: !Sub feedback-platform-api-${StageName}
       StageName: !Ref StageName
       OpenApiVersion: 3.0.3
+      MergeDefinitions: true
       DefinitionBody:
         openapi: 3.0.3
         info:
