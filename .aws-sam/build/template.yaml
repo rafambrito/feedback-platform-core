@@ -206,18 +206,6 @@ Resources:
           - Ref: HmlJwtIssuer
           - Ref: PrdJwtIssuer
       Description: Issuer JWT esperado para validacao de tokens
-  CognitoUserPoolAuthorizer:
-    Type: AWS::ApiGateway::Authorizer
-    Properties:
-      Name: CognitoUserPoolAuthorizer
-      Type: COGNITO_USER_POOLS
-      IdentitySource: method.request.header.Authorization
-      ProviderARNs:
-      - Fn::GetAtt:
-        - CognitoUserPool
-        - Arn
-      RestApiId:
-        Ref: ApiGatewayRestApi
   CollectorFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -236,8 +224,6 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /feedback
             Method: post
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
         CollectorGetFeedback:
           Type: Api
           Properties:
@@ -245,8 +231,6 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /feedback/{id}
             Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
   NotifierFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -315,9 +299,6 @@ Outputs:
   RestApiId:
     Value:
       Ref: ApiGatewayRestApi
-  CognitoAuthorizerId:
-    Value:
-      Ref: CognitoUserPoolAuthorizer
   CognitoUserPoolArn:
     Value:
       Fn::GetAtt:

@@ -195,16 +195,6 @@ Resources:
           - !Ref PrdJwtIssuer
       Description: Issuer JWT esperado para validacao de tokens
 
-  CognitoUserPoolAuthorizer:
-    Type: AWS::ApiGateway::Authorizer
-    Properties:
-      Name: CognitoUserPoolAuthorizer
-      Type: COGNITO_USER_POOLS
-      IdentitySource: method.request.header.Authorization
-      ProviderARNs:
-        - !GetAtt CognitoUserPool.Arn
-      RestApiId: !Ref ApiGatewayRestApi
-
   CollectorFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -220,16 +210,12 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /feedback
             Method: post
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
         CollectorGetFeedback:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /feedback/{id}
             Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
 
   NotifierFunction:
     Type: AWS::Serverless::Function
@@ -246,24 +232,18 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/urgent
             Method: post
-            #Auth:
-              #Authorizer: CognitoUserPoolAuthorizer
         NotifierGetById:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/{id}
             Method: get
-            #Auth:
-              #Authorizer: CognitoUserPoolAuthorizer
         NotifierPostSimulate:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/test/simulate
             Method: post
-            #Auth:
-              #Authorizer: CognitoUserPoolAuthorizer
 
   ReporterFunction:
     Type: AWS::Serverless::Function
@@ -280,30 +260,22 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/professor/{professorId}
             Method: get
-            #Auth:
-              #Authorizer: CognitoUserPoolAuthorizer
         ReporterGetCurso:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/curso/{cursoId}
             Method: get
-            #Auth:
-              #Authorizer: CognitoUserPoolAuthorizer
         ReporterGetWeekly:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/weekly
             Method: get
-            #Auth:
-              #Authorizer: CognitoUserPoolAuthorizer
 
 Outputs:
   RestApiId:
     Value: !Ref ApiGatewayRestApi
-  CognitoAuthorizerId:
-    Value: !Ref CognitoUserPoolAuthorizer
   CognitoUserPoolArn:
     Value: !GetAtt CognitoUserPool.Arn
   CognitoUserPoolClientId:
