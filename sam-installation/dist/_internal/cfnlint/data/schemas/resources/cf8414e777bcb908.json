@@ -1,0 +1,62 @@
+{
+ "additionalProperties": false,
+ "createOnlyProperties": [
+  "/properties/RoleArn",
+  "/properties/DataSource",
+  "/properties/JobName",
+  "/properties/DatasetGroupArn"
+ ],
+ "definitions": {
+  "DataSource": {
+   "additionalProperties": false,
+   "properties": {
+    "DataLocation": {
+     "type": "string"
+    }
+   },
+   "type": "object"
+  }
+ },
+ "description": "Resource Type definition for AWS::Personalize::DataDeletionJob",
+ "primaryIdentifier": [
+  "/properties/Id"
+ ],
+ "properties": {
+  "CreationDateTime": {
+   "type": "string"
+  },
+  "DataDeletionJobArn": {
+   "type": "string"
+  },
+  "DataSource": {
+   "$ref": "#/definitions/DataSource"
+  },
+  "DatasetGroupArn": {
+   "type": "string"
+  },
+  "Id": {
+   "type": "string"
+  },
+  "JobName": {
+   "type": "string"
+  },
+  "LastUpdatedDateTime": {
+   "type": "string"
+  },
+  "RoleArn": {
+   "format": "AWS::IAM::Role.Arn",
+   "type": "string"
+  },
+  "Status": {
+   "type": "string"
+  }
+ },
+ "readOnlyProperties": [
+  "/properties/DataDeletionJobArn",
+  "/properties/LastUpdatedDateTime",
+  "/properties/Id",
+  "/properties/Status",
+  "/properties/CreationDateTime"
+ ],
+ "typeName": "AWS::Personalize::DataDeletionJob"
+}

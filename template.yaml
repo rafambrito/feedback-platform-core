@@ -207,11 +207,11 @@ Resources:
 
   CollectorFunction:
     Type: AWS::Serverless::Function
-    #Metadata:
-      #BuildMethod: makefile
+    Metadata:
+      BuildMethod: makefile
     Properties:
       FunctionName: !Sub feedback-collector-${StageName}
-      CodeUri: feedback-collector/
+      CodeUri: .
       Handler: com.feedback.platform.lambda.CollectorLambdaHandler::handleRequest
       Events:
         CollectorPostFeedback:
@@ -233,11 +233,11 @@ Resources:
 
   NotifierFunction:
     Type: AWS::Serverless::Function
-    #Metadata:
-      #BuildMethod: makefile
+    Metadata:
+      BuildMethod: makefile
     Properties:
       FunctionName: !Sub feedback-notifier-${StageName}
-      CodeUri: feedback-notifier/
+      CodeUri: .
       Handler: com.feedback.platform.notifier.lambda.NotifierLambdaHandler::handleRequest
       Events:
         NotifierPostUrgent:
@@ -267,11 +267,11 @@ Resources:
 
   ReporterFunction:
     Type: AWS::Serverless::Function
-    #Metadata:
-      #BuildMethod: makefile
+    Metadata:
+      BuildMethod: makefile
     Properties:
       FunctionName: !Sub feedback-reporter-${StageName}
-      CodeUri: feedback-reporter/
+      CodeUri: .
       Handler: com.feedback.platform.reporter.lambda.ReporterLambdaHandler::handleRequest
       Events:
         ReporterGetProfessor:

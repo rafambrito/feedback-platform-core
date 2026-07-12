@@ -1,0 +1,54 @@
+{
+ "additionalProperties": false,
+ "definitions": {
+  "KmsConfiguration": {
+   "additionalProperties": false,
+   "properties": {
+    "KeyType": {
+     "type": "string"
+    },
+    "KmsKeyArn": {
+     "format": "AWS::KMS::Key.Arn",
+     "type": "string"
+    }
+   },
+   "required": [
+    "KeyType"
+   ],
+   "type": "object"
+  }
+ },
+ "description": "Resource Type definition for AWS::BedrockAgentCore::TokenVault",
+ "primaryIdentifier": [
+  "/properties/TokenVaultId"
+ ],
+ "properties": {
+  "Arn": {
+   "type": "string"
+  },
+  "KmsConfiguration": {
+   "$ref": "#/definitions/KmsConfiguration"
+  },
+  "KmsConfigurationKeyType": {
+   "type": "string"
+  },
+  "KmsConfigurationKmsKeyArn": {
+   "type": "string"
+  },
+  "LastModifiedDate": {
+   "type": "string"
+  },
+  "TokenVaultId": {
+   "type": "string"
+  }
+ },
+ "readOnlyProperties": [
+  "/properties/KmsConfiguration/KeyType",
+  "/properties/LastModifiedDate",
+  "/properties/KmsConfiguration/KmsKeyArn",
+  "/properties/KmsConfiguration",
+  "/properties/Arn",
+  "/properties/TokenVaultId"
+ ],
+ "typeName": "AWS::BedrockAgentCore::TokenVault"
+}

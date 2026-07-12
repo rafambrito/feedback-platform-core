@@ -1,0 +1,340 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: feedback-platform-core serverless API with Cognito authorizer
+Parameters:
+  StageName:
+    Type: String
+    Default: dev
+    AllowedValues:
+    - dev
+    - hml
+    - prd
+  DevJwtIssuer:
+    Type: String
+    Default: https://cognito-idp.us-east-1.amazonaws.com/dev-user-pool-id
+    Description: Issuer JWT esperado no ambiente dev
+  HmlJwtIssuer:
+    Type: String
+    Default: https://cognito-idp.us-east-1.amazonaws.com/hml-user-pool-id
+    Description: Issuer JWT esperado no ambiente hml
+  PrdJwtIssuer:
+    Type: String
+    Default: https://cognito-idp.us-east-1.amazonaws.com/prd-user-pool-id
+    Description: Issuer JWT esperado no ambiente prd
+  DevOAuthScopes:
+    Type: CommaDelimitedList
+    Default: openid,email,profile
+    Description: Escopos OAuth permitidos para dev
+  HmlOAuthScopes:
+    Type: CommaDelimitedList
+    Default: openid,email,profile
+    Description: Escopos OAuth permitidos para hml
+  PrdOAuthScopes:
+    Type: CommaDelimitedList
+    Default: openid,email,profile
+    Description: Escopos OAuth permitidos para prd
+  DevAccessTokenValidityMinutes:
+    Type: Number
+    Default: 60
+    MinValue: 5
+    MaxValue: 1440
+    Description: Validade do Access Token (minutos) em dev
+  HmlAccessTokenValidityMinutes:
+    Type: Number
+    Default: 30
+    MinValue: 5
+    MaxValue: 1440
+    Description: Validade do Access Token (minutos) em hml
+  PrdAccessTokenValidityMinutes:
+    Type: Number
+    Default: 15
+    MinValue: 5
+    MaxValue: 1440
+    Description: Validade do Access Token (minutos) em prd
+  DevIdTokenValidityMinutes:
+    Type: Number
+    Default: 60
+    MinValue: 5
+    MaxValue: 1440
+    Description: Validade do ID Token (minutos) em dev
+  HmlIdTokenValidityMinutes:
+    Type: Number
+    Default: 30
+    MinValue: 5
+    MaxValue: 1440
+    Description: Validade do ID Token (minutos) em hml
+  PrdIdTokenValidityMinutes:
+    Type: Number
+    Default: 15
+    MinValue: 5
+    MaxValue: 1440
+    Description: Validade do ID Token (minutos) em prd
+  DevRefreshTokenValidityDays:
+    Type: Number
+    Default: 30
+    MinValue: 1
+    MaxValue: 3650
+    Description: Validade do Refresh Token (dias) em dev
+  HmlRefreshTokenValidityDays:
+    Type: Number
+    Default: 15
+    MinValue: 1
+    MaxValue: 3650
+    Description: Validade do Refresh Token (dias) em hml
+  PrdRefreshTokenValidityDays:
+    Type: Number
+    Default: 7
+    MinValue: 1
+    MaxValue: 3650
+    Description: Validade do Refresh Token (dias) em prd
+Conditions:
+  IsDev:
+    Fn::Equals:
+    - Ref: StageName
+    - dev
+  IsHml:
+    Fn::Equals:
+    - Ref: StageName
+    - hml
+Globals:
+  Function:
+    Runtime: java21
+    MemorySize: 1024
+    Timeout: 30
+Resources:
+  ApiGatewayRestApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name:
+        Fn::Sub: feedback-platform-api-${StageName}
+      StageName:
+        Ref: StageName
+      Auth:
+        DefaultAuthorizer: CognitoUserPoolAuthorizer
+        Authorizers:
+          CognitoUserPoolAuthorizer:
+            UserPoolArn:
+              Fn::GetAtt:
+              - CognitoUserPool
+              - Arn
+  CognitoUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName:
+        Fn::Sub: feedback-platform-user-pool-${StageName}
+      UsernameAttributes:
+      - email
+      AutoVerifiedAttributes:
+      - email
+      MfaConfiguration: 'OFF'
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireLowercase: true
+          RequireNumbers: true
+          RequireSymbols: true
+          RequireUppercase: true
+  CognitoUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName:
+        Fn::Sub: feedback-platform-client-${StageName}
+      UserPoolId:
+        Ref: CognitoUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+      - ALLOW_USER_PASSWORD_AUTH
+      - ALLOW_REFRESH_TOKEN_AUTH
+      - ALLOW_USER_SRP_AUTH
+      AllowedOAuthFlowsUserPoolClient: true
+      AllowedOAuthFlows:
+      - code
+      CallbackURLs:
+      - https://localhost/callback
+      LogoutURLs:
+      - https://localhost/signout
+      AllowedOAuthScopes:
+        Fn::If:
+        - IsDev
+        - Ref: DevOAuthScopes
+        - Fn::If:
+          - IsHml
+          - Ref: HmlOAuthScopes
+          - Ref: PrdOAuthScopes
+      SupportedIdentityProviders:
+      - COGNITO
+      AccessTokenValidity:
+        Fn::If:
+        - IsDev
+        - Ref: DevAccessTokenValidityMinutes
+        - Fn::If:
+          - IsHml
+          - Ref: HmlAccessTokenValidityMinutes
+          - Ref: PrdAccessTokenValidityMinutes
+      IdTokenValidity:
+        Fn::If:
+        - IsDev
+        - Ref: DevIdTokenValidityMinutes
+        - Fn::If:
+          - IsHml
+          - Ref: HmlIdTokenValidityMinutes
+          - Ref: PrdIdTokenValidityMinutes
+      RefreshTokenValidity:
+        Fn::If:
+        - IsDev
+        - Ref: DevRefreshTokenValidityDays
+        - Fn::If:
+          - IsHml
+          - Ref: HmlRefreshTokenValidityDays
+          - Ref: PrdRefreshTokenValidityDays
+      TokenValidityUnits:
+        AccessToken: minutes
+        IdToken: minutes
+        RefreshToken: days
+  CognitoIssuerParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name:
+        Fn::Sub: /feedback-platform/${StageName}/cognito/issuer
+      Type: String
+      Value:
+        Fn::If:
+        - IsDev
+        - Ref: DevJwtIssuer
+        - Fn::If:
+          - IsHml
+          - Ref: HmlJwtIssuer
+          - Ref: PrdJwtIssuer
+      Description: Issuer JWT esperado para validacao de tokens
+  CognitoUserPoolAuthorizer:
+    Type: AWS::ApiGateway::Authorizer
+    Properties:
+      Name: CognitoUserPoolAuthorizer
+      Type: COGNITO_USER_POOLS
+      IdentitySource: method.request.header.Authorization
+      ProviderARNs:
+      - Fn::GetAtt:
+        - CognitoUserPool
+        - Arn
+      RestApiId:
+        Ref: ApiGatewayRestApi
+  CollectorFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+      SamResourceId: CollectorFunction
+    Properties:
+      FunctionName:
+        Fn::Sub: feedback-collector-${StageName}
+      CodeUri: CollectorFunction
+      Handler: com.feedback.platform.lambda.CollectorLambdaHandler::handleRequest
+      Events:
+        CollectorPostFeedback:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /feedback
+            Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+        CollectorGetFeedback:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /feedback/{id}
+            Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+  NotifierFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+      SamResourceId: NotifierFunction
+    Properties:
+      FunctionName:
+        Fn::Sub: feedback-notifier-${StageName}
+      CodeUri: NotifierFunction
+      Handler: com.feedback.platform.notifier.lambda.NotifierLambdaHandler::handleRequest
+      Events:
+        NotifierPostUrgent:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /notifications/urgent
+            Method: post
+        NotifierGetById:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /notifications/{id}
+            Method: get
+        NotifierPostSimulate:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /notifications/test/simulate
+            Method: post
+  ReporterFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+      SamResourceId: ReporterFunction
+    Properties:
+      FunctionName:
+        Fn::Sub: feedback-reporter-${StageName}
+      CodeUri: ReporterFunction
+      Handler: com.feedback.platform.reporter.lambda.ReporterLambdaHandler::handleRequest
+      Events:
+        ReporterGetProfessor:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /reports/professor/{professorId}
+            Method: get
+        ReporterGetCurso:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /reports/curso/{cursoId}
+            Method: get
+        ReporterGetWeekly:
+          Type: Api
+          Properties:
+            RestApiId:
+              Ref: ApiGatewayRestApi
+            Path: /reports/weekly
+            Method: get
+Outputs:
+  RestApiId:
+    Value:
+      Ref: ApiGatewayRestApi
+  CognitoAuthorizerId:
+    Value:
+      Ref: CognitoUserPoolAuthorizer
+  CognitoUserPoolArn:
+    Value:
+      Fn::GetAtt:
+      - CognitoUserPool
+      - Arn
+  CognitoUserPoolClientId:
+    Value:
+      Ref: CognitoUserPoolClient
+  CognitoJwtIssuerConfigured:
+    Value:
+      Fn::If:
+      - IsDev
+      - Ref: DevJwtIssuer
+      - Fn::If:
+        - IsHml
+        - Ref: HmlJwtIssuer
+        - Ref: PrdJwtIssuer
+  CognitoJwtIssuerFromPool:
+    Value:
+      Fn::Sub: https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
