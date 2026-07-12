@@ -1,7 +1,7 @@
 name: Deploy Pipeline
 on:
   push:
-    branches: [ migracao_aws_lambda ]
+    branches: [ feature/migracao_aws_lambda ]
 
 jobs:
   deploy:
@@ -19,4 +19,5 @@ jobs:
           sam deploy --no-confirm-changeset \
             --stack-name feedback-platform \
             --parameter-overrides StageName=dev \
-            --capabilities CAPABILITY_IAM
+            --capabilities CAPABILITY_IAM \
+            --region us-east-2
