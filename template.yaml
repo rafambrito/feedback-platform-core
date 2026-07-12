@@ -105,6 +105,11 @@ Resources:
     Properties:
       Name: !Sub feedback-platform-api-${StageName}
       StageName: !Ref StageName
+      Auth:
+        DefaultAuthorizer: CognitoUserPoolAuthorizer
+        Authorizers:
+          CognitoUserPoolAuthorizer:
+            UserPoolArn: !GetAtt CognitoUserPool.Arn
 
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
