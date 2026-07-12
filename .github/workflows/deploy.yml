@@ -20,4 +20,5 @@ jobs:
             --stack-name feedback-platform \
             --parameter-overrides StageName=dev \
             --capabilities CAPABILITY_IAM \
+            --resolve-s3 \
             --region us-east-2
