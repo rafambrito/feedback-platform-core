@@ -246,24 +246,24 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/urgent
             Method: post
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
+            #Auth:
+              #Authorizer: CognitoUserPoolAuthorizer
         NotifierGetById:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/{id}
             Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
+            #Auth:
+              #Authorizer: CognitoUserPoolAuthorizer
         NotifierPostSimulate:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/test/simulate
             Method: post
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
+            #Auth:
+              #Authorizer: CognitoUserPoolAuthorizer
 
   ReporterFunction:
     Type: AWS::Serverless::Function
@@ -280,24 +280,24 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/professor/{professorId}
             Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
+            #Auth:
+              #Authorizer: CognitoUserPoolAuthorizer
         ReporterGetCurso:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/curso/{cursoId}
             Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
+            #Auth:
+              #Authorizer: CognitoUserPoolAuthorizer
         ReporterGetWeekly:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/weekly
             Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
+            #Auth:
+              #Authorizer: CognitoUserPoolAuthorizer
 
 Outputs:
   RestApiId:
