@@ -207,8 +207,8 @@ Resources:
 
   CollectorFunction:
     Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
+    #Metadata:
+      #BuildMethod: makefile
     Properties:
       FunctionName: !Sub feedback-collector-${StageName}
       CodeUri: feedback-collector/
@@ -233,8 +233,8 @@ Resources:
 
   NotifierFunction:
     Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
+    #Metadata:
+      #BuildMethod: makefile
     Properties:
       FunctionName: !Sub feedback-notifier-${StageName}
       CodeUri: feedback-notifier/
@@ -267,8 +267,8 @@ Resources:
 
   ReporterFunction:
     Type: AWS::Serverless::Function
-    Metadata:
-      BuildMethod: makefile
+    #Metadata:
+      #BuildMethod: makefile
     Properties:
       FunctionName: !Sub feedback-reporter-${StageName}
       CodeUri: feedback-reporter/
