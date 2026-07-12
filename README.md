@@ -69,3 +69,123 @@ Checklist operacional e definição de painel mínimo:
 
 - `docs/observability-checklist.md`
 
+## 📘 Documentação da API
+
+O contrato OpenAPI mantido na raiz do projeto está em `openapi.yaml` e documenta todos os endpoints expostos pelas Lambdas com:
+
+- rotas, métodos e parâmetros
+- request bodies e responses
+- autenticação Bearer JWT com Amazon Cognito
+- exemplos de payload para testes rápidos
+
+Endpoint publicado em dev:
+
+- `https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev`
+
+Observação importante sobre AWS SAM:
+
+- o arquivo `openapi.yaml` é a referência legível do contrato para o time
+- para manter compatibilidade com `sam validate` usando `Auth` Cognito, o mesmo contrato também foi embutido em `DefinitionBody` dentro de `template.yaml`, porque o SAM exige definição inline para aplicar authorizers Cognito
+
+## 🔐 Autenticação Cognito
+
+O `template.yaml` provisiona:
+
+- `AWS::Cognito::UserPool`
+- `AWS::Cognito::UserPoolClient`
+- grupo `ADMIN`
+- usuário padrão para testes
+
+Credenciais padrão de teste:
+
+- usuário: `admin`
+- senha: `fiap2026brito`
+
+O usuário é criado como permanente via custom resource no deploy. Se quiser sobrescrever em outro ambiente, passe os parâmetros abaixo no deploy:
+
+- `DefaultAdminUsername`
+- `DefaultAdminEmail`
+- `DefaultAdminPassword`
+
+## 🧪 Como testar a API
+
+### 1. Gerar token no Cognito
+
+Exemplo com AWS CLI usando fluxo de senha:
+
+```bash
+aws cognito-idp initiate-auth \
+	--region us-east-2 \
+	--client-id <COGNITO_USER_POOL_CLIENT_ID> \
+	--auth-flow USER_PASSWORD_AUTH \
+	--auth-parameters USERNAME=admin,PASSWORD=fiap2026brito
+```
+
+Use o `AccessToken` retornado no cabeçalho:
+
+```bash
+Authorization: Bearer <ACCESS_TOKEN>
+```
+
+### 2. Testar endpoints
+
+Criar feedback:
+
+```bash
+curl -X POST 'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/feedback' \
+	-H 'Authorization: Bearer <ACCESS_TOKEN>' \
+	-H 'Content-Type: application/json' \
+	-d '{
+		"cursoId": "1TIA",
+		"alunoId": "aluno-001",
+		"professorId": "prof-123",
+		"nota": 9,
+		"comentario": "Aula clara, com boa explicacao dos exercicios."
+	}'
+```
+
+Consultar relatório semanal:
+
+```bash
+curl 'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/reports/weekly?courseId=1TIA' \
+	-H 'Authorization: Bearer <ACCESS_TOKEN>'
+```
+
+## ☁️ Fluxo SAM
+
+Validar template:
+
+```bash
+sam validate --region us-east-2
+```
+
+Build da aplicação:
+
+```bash
+sam build --region us-east-2
+```
+
+Deploy guiado:
+
+```bash
+sam deploy --guided --region us-east-2
+```
+
+Parâmetros recomendados no deploy:
+
+```text
+StageName=dev
+DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
+HmlJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
+PrdJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
+```
+
+## ✅ Validação executada
+
+Validações executadas neste repositório após as alterações:
+
+- `sam validate --region us-east-2`: sucesso
+- `sam build --region us-east-2`: sucesso
+
+O deploy real em AWS não foi executado neste ambiente porque depende das suas credenciais, confirmação de stack e parâmetros finais de infraestrutura.
+

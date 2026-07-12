@@ -88,6 +88,19 @@ Parameters:
     MinValue: 1
     MaxValue: 3650
     Description: Validade do Refresh Token (dias) em prd
+  DefaultAdminUsername:
+    Type: String
+    Default: admin
+    Description: Usuario padrao criado no Cognito para testes manuais da API
+  DefaultAdminEmail:
+    Type: String
+    Default: admin@feedback-platform.local
+    Description: Email do usuario padrao criado no Cognito
+  DefaultAdminPassword:
+    Type: String
+    NoEcho: true
+    Default: fiap2026brito
+    Description: Senha permanente do usuario padrao criado no Cognito
 
 Conditions:
   IsDev: !Equals [!Ref StageName, dev]
@@ -105,6 +118,575 @@ Resources:
     Properties:
       Name: !Sub feedback-platform-api-${StageName}
       StageName: !Ref StageName
+      OpenApiVersion: 3.0.3
+      DefinitionBody:
+        openapi: 3.0.3
+        info:
+          title: Feedback Platform API
+          version: 1.0.0
+          description: |
+            API serverless do projeto feedback-platform-core exposta pelo Amazon API Gateway e protegida por Amazon Cognito.
+
+            Boas praticas aplicadas neste contrato:
+            - autenticacao centralizada no API Gateway com bearer JWT
+            - schemas de request e response versionados no contrato
+            - exemplos de payload para teste rapido
+            - respostas de erro padronizadas para 4xx e 5xx
+        servers:
+          - url: https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev
+            description: Ambiente dev publicado na AWS
+        tags:
+          - name: Feedback
+            description: Coleta e consulta de feedbacks
+          - name: Notifications
+            description: Processamento e consulta de notificacoes
+          - name: Reports
+            description: Consultas analiticas e relatorios
+        security:
+          - CognitoBearerAuth: []
+        paths:
+          /feedback:
+            post:
+              tags:
+                - Feedback
+              summary: Registrar feedback
+              description: Recebe um feedback academico e encaminha o processamento pela Lambda de coleta.
+              operationId: createFeedback
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/FeedbackRequest'
+                    examples:
+                      default:
+                        value:
+                          cursoId: 1TIA
+                          alunoId: aluno-001
+                          professorId: prof-123
+                          nota: 9
+                          comentario: Aula clara, com boa explicacao dos exercicios.
+              responses:
+                '201':
+                  description: Feedback recebido com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/MessageResponse'
+                      example:
+                        message: Feedback recebido com sucesso
+                '400':
+                  $ref: '#/components/responses/BadRequestMessage'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '500':
+                  $ref: '#/components/responses/InternalServerErrorMessage'
+              x-amazon-apigateway-request-validator: body-only
+          /feedback/{id}:
+            get:
+              tags:
+                - Feedback
+              summary: Consultar feedback por ID
+              description: Recupera um feedback previamente armazenado pelo identificador informado.
+              operationId: getFeedbackById
+              parameters:
+                - $ref: '#/components/parameters/FeedbackId'
+              responses:
+                '200':
+                  description: Feedback encontrado.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/FeedbackResponse'
+                      example:
+                        id: fb-1a2b3c
+                        cursoId: 1TIA
+                        alunoId: aluno-001
+                        professorId: prof-123
+                        nota: 9
+                        comentario: Aula clara, com boa explicacao dos exercicios.
+                        criticidade: BAIXA
+                        dataCriacao: '2026-07-12T13:15:10Z'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '404':
+                  $ref: '#/components/responses/NotFoundError'
+                '500':
+                  $ref: '#/components/responses/InternalServerError'
+          /notifications/urgent:
+            post:
+              tags:
+                - Notifications
+              summary: Enviar notificacao urgente
+              description: Dispara o processamento de uma notificacao urgente a partir de um evento de criticidade.
+              operationId: createUrgentNotification
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/UrgencyNotification'
+                    examples:
+                      default:
+                        value:
+                          feedbackId: fb-1a2b3c
+                          alunoId: aluno-001
+                          professorId: prof-123
+                          urgencia: CRITICA
+              responses:
+                '201':
+                  description: Notificacao criada com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/NotificationResponse'
+                      example:
+                        id: ntf-1a2b3c
+                        feedbackId: fb-1a2b3c
+                        professorId: prof-123
+                        status: ENVIADA
+                        dataCriacao: '2026-07-12T13:20:10Z'
+                        dataEnvio: '2026-07-12T13:20:12Z'
+                '400':
+                  $ref: '#/components/responses/BadRequestError'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '500':
+                  $ref: '#/components/responses/InternalServerError'
+          /notifications/{id}:
+            get:
+              tags:
+                - Notifications
+              summary: Consultar notificacao por ID
+              description: Retorna os detalhes da notificacao persistida.
+              operationId: getNotificationById
+              parameters:
+                - $ref: '#/components/parameters/NotificationId'
+              responses:
+                '200':
+                  description: Notificacao encontrada.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/NotificationResponse'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '404':
+                  description: Notificacao nao encontrada.
+                '500':
+                  $ref: '#/components/responses/InternalServerError'
+          /notifications/test/simulate:
+            post:
+              tags:
+                - Notifications
+              summary: Simular recebimento de notificacao
+              description: Endpoint auxiliar para dev e homologacao que simula o consumo de uma mensagem pelo servico de notificacoes.
+              operationId: simulateNotificationMessage
+              requestBody:
+                required: true
+                content:
+                  text/plain:
+                    schema:
+                      type: string
+                    example: '{"detail":{"feedbackId":"fb-1a2b3c","alunoId":"aluno-001","professorId":"prof-123","urgencia":"CRITICA"}}'
+                  application/json:
+                    schema:
+                      type: object
+                      additionalProperties: true
+              responses:
+                '200':
+                  description: Simulacao processada com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/MessageResponse'
+                      example:
+                        message: Simulação processada com sucesso
+                '400':
+                  $ref: '#/components/responses/BadRequestError'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+          /reports/professor/{professorId}:
+            get:
+              tags:
+                - Reports
+              summary: Consultar relatorio por professor
+              description: Retorna os feedbacks agregados para um professor.
+              operationId: getProfessorReport
+              parameters:
+                - $ref: '#/components/parameters/ProfessorId'
+              responses:
+                '200':
+                  description: Relatorio retornado com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/ProfessorReportResponse'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '500':
+                  $ref: '#/components/responses/InternalServerError'
+          /reports/curso/{cursoId}:
+            get:
+              tags:
+                - Reports
+              summary: Consultar relatorio por curso
+              description: Retorna os feedbacks agregados para um curso.
+              operationId: getCourseReport
+              parameters:
+                - $ref: '#/components/parameters/CursoId'
+              responses:
+                '200':
+                  description: Relatorio retornado com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/CursoReportResponse'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '500':
+                  $ref: '#/components/responses/InternalServerError'
+          /reports/weekly:
+            get:
+              tags:
+                - Reports
+              summary: Consultar relatorio semanal por curso
+              description: Gera um consolidado semanal por curso, opcionalmente filtrando por professor.
+              operationId: getWeeklyCourseReport
+              parameters:
+                - name: courseId
+                  in: query
+                  required: true
+                  description: Identificador do curso.
+                  schema:
+                    type: string
+                - name: professorId
+                  in: query
+                  required: false
+                  description: Identificador do professor para filtragem opcional.
+                  schema:
+                    type: string
+              responses:
+                '200':
+                  description: Relatorio semanal retornado com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/WeeklyCourseReportResponse'
+                '400':
+                  description: Parametros invalidos.
+                  content:
+                    text/plain:
+                      schema:
+                        type: string
+                      example: courseId é obrigatório
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '500':
+                  $ref: '#/components/responses/InternalServerError'
+        components:
+          securitySchemes:
+            CognitoBearerAuth:
+              type: http
+              scheme: bearer
+              bearerFormat: JWT
+              description: |
+                Access token emitido pelo Amazon Cognito User Pool configurado no API Gateway.
+                Envie o cabecalho Authorization no formato Bearer <token>.
+          parameters:
+            FeedbackId:
+              name: id
+              in: path
+              required: true
+              description: Identificador unico do feedback.
+              schema:
+                type: string
+            NotificationId:
+              name: id
+              in: path
+              required: true
+              description: Identificador unico da notificacao.
+              schema:
+                type: string
+            ProfessorId:
+              name: professorId
+              in: path
+              required: true
+              description: Identificador do professor.
+              schema:
+                type: string
+            CursoId:
+              name: cursoId
+              in: path
+              required: true
+              description: Identificador do curso.
+              schema:
+                type: string
+          responses:
+            BadRequestMessage:
+              description: Requisicao invalida.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/MessageResponse'
+                  example:
+                    message: Payload de entrada é obrigatório
+            BadRequestError:
+              description: Requisicao invalida.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ErrorMessageResponse'
+                  example:
+                    error: Payload inválido
+            UnauthorizedError:
+              description: Token ausente, invalido ou expirado.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/AuthErrorResponse'
+                  example:
+                    error_code: TOKEN_INVALID
+                    message: Authorization Bearer token is required
+                    trace_id: 2d7ddf8d-9c23-4b3a-aa1f-3fe0e4d9b111
+            ForbiddenError:
+              description: Token valido sem permissao suficiente.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/AuthErrorResponse'
+                  example:
+                    error_code: INSUFFICIENT_PERMISSION
+                    message: JWT must contain at least one role in 'groups' or 'scope'
+                    trace_id: 2d7ddf8d-9c23-4b3a-aa1f-3fe0e4d9b111
+            NotFoundError:
+              description: Recurso nao encontrado.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/AuthErrorResponse'
+                  example:
+                    error_code: NOT_FOUND
+                    message: Feedback nao encontrado
+                    trace_id: 2d7ddf8d-9c23-4b3a-aa1f-3fe0e4d9b111
+            InternalServerError:
+              description: Erro interno no processamento.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/ErrorMessageResponse'
+                  example:
+                    error: Erro ao processar notificação
+            InternalServerErrorMessage:
+              description: Erro interno no processamento.
+              content:
+                application/json:
+                  schema:
+                    $ref: '#/components/schemas/MessageResponse'
+                  example:
+                    message: Erro interno ao processar feedback
+          schemas:
+            FeedbackRequest:
+              type: object
+              required:
+                - cursoId
+                - alunoId
+                - professorId
+                - nota
+                - comentario
+              properties:
+                cursoId:
+                  type: string
+                alunoId:
+                  type: string
+                professorId:
+                  type: string
+                nota:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+                comentario:
+                  type: string
+              additionalProperties: false
+            FeedbackResponse:
+              type: object
+              properties:
+                id:
+                  type: string
+                cursoId:
+                  type: string
+                alunoId:
+                  type: string
+                professorId:
+                  type: string
+                nota:
+                  type: integer
+                comentario:
+                  type: string
+                criticidade:
+                  type: string
+                  enum:
+                    - BAIXA
+                    - MEDIA
+                    - ALTA
+                    - CRITICA
+                dataCriacao:
+                  type: string
+                  format: date-time
+            UrgencyNotification:
+              type: object
+              required:
+                - feedbackId
+                - alunoId
+                - professorId
+                - urgencia
+              properties:
+                feedbackId:
+                  type: string
+                alunoId:
+                  type: string
+                professorId:
+                  type: string
+                urgencia:
+                  type: string
+                  enum:
+                    - BAIXA
+                    - MEDIA
+                    - ALTA
+                    - CRITICA
+              additionalProperties: false
+            NotificationResponse:
+              type: object
+              properties:
+                id:
+                  type: string
+                feedbackId:
+                  type: string
+                professorId:
+                  type: string
+                status:
+                  type: string
+                dataCriacao:
+                  type: string
+                  format: date-time
+                dataEnvio:
+                  type: string
+                  format: date-time
+                  nullable: true
+            FeedbackReportItem:
+              type: object
+              properties:
+                id:
+                  type: string
+                cursoId:
+                  type: string
+                alunoId:
+                  type: string
+                professorId:
+                  type: string
+                nota:
+                  type: integer
+                  nullable: true
+                comentario:
+                  type: string
+                criticidade:
+                  type: string
+                dataCriacao:
+                  type: string
+                  format: date-time
+            ProfessorReportResponse:
+              type: object
+              properties:
+                professorId:
+                  type: string
+                totalFeedbacks:
+                  type: integer
+                feedbacks:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FeedbackReportItem'
+            CursoReportResponse:
+              type: object
+              properties:
+                cursoId:
+                  type: string
+                totalFeedbacks:
+                  type: integer
+                feedbacks:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/FeedbackReportItem'
+            WeeklyCourseReportResponse:
+              type: object
+              properties:
+                courseId:
+                  type: string
+                professorId:
+                  type: string
+                  nullable: true
+                totalFeedbacks:
+                  type: integer
+                averageNota:
+                  type: number
+                  format: double
+                baixaCount:
+                  type: integer
+                  format: int64
+                mediaCount:
+                  type: integer
+                  format: int64
+                altaCount:
+                  type: integer
+                  format: int64
+                feedbacksByProfessor:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                    format: int64
+                generatedAt:
+                  type: string
+                  format: date-time
+            MessageResponse:
+              type: object
+              required:
+                - message
+              properties:
+                message:
+                  type: string
+            ErrorMessageResponse:
+              type: object
+              properties:
+                error:
+                  type: string
+            AuthErrorResponse:
+              type: object
+              properties:
+                error_code:
+                  type: string
+                message:
+                  type: string
+                trace_id:
+                  type: string
+        x-amazon-apigateway-request-validators:
+          body-only:
+            validateRequestBody: true
+            validateRequestParameters: false
       Auth:
         DefaultAuthorizer: CognitoUserPoolAuthorizer
         Authorizers:
@@ -115,7 +697,7 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub feedback-platform-user-pool-${StageName}
-      UsernameAttributes:
+      AliasAttributes:
         - email
       AutoVerifiedAttributes:
         - email
@@ -125,8 +707,15 @@ Resources:
           MinimumLength: 8
           RequireLowercase: true
           RequireNumbers: true
-          RequireSymbols: true
+          RequireSymbols: false
           RequireUppercase: true
+
+  CognitoAdminGroup:
+    Type: AWS::Cognito::UserPoolGroup
+    Properties:
+      GroupName: ADMIN
+      Description: Grupo administrativo padrao para testes da API
+      UserPoolId: !Ref CognitoUserPool
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
@@ -179,6 +768,139 @@ Resources:
         AccessToken: minutes
         IdToken: minutes
         RefreshToken: days
+
+  CognitoDefaultAdminUser:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      Username: !Ref DefaultAdminUsername
+      MessageAction: SUPPRESS
+      DesiredDeliveryMediums: []
+      UserAttributes:
+        - Name: email
+          Value: !Ref DefaultAdminEmail
+        - Name: email_verified
+          Value: "true"
+
+  CognitoSeedUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: cognito-seed-user
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cognito-idp:AdminCreateUser
+                  - cognito-idp:AdminSetUserPassword
+                  - cognito-idp:AdminAddUserToGroup
+                  - cognito-idp:AdminGetUser
+                  - cognito-idp:AdminUpdateUserAttributes
+                Resource: !GetAtt CognitoUserPool.Arn
+
+  CognitoSeedUserFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 60
+      Role: !GetAtt CognitoSeedUserRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import urllib3
+          import boto3
+
+          http = urllib3.PoolManager()
+          cognito = boto3.client("cognito-idp")
+
+          def send(event, context, status, data, reason=None):
+              body = {
+                  "Status": status,
+                  "Reason": reason or f"See details in CloudWatch Log Stream: {context.log_stream_name}",
+                  "PhysicalResourceId": event.get("PhysicalResourceId") or f"{event['ResourceProperties']['UserPoolId']}:{event['ResourceProperties']['Username']}",
+                  "StackId": event["StackId"],
+                  "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"],
+                  "Data": data,
+              }
+              encoded = json.dumps(body).encode("utf-8")
+              http.request("PUT", event["ResponseURL"], body=encoded, headers={"content-type": "", "content-length": str(len(encoded))})
+
+          def ensure_user(props):
+              user_pool_id = props["UserPoolId"]
+              username = props["Username"]
+              password = props["Password"]
+              email = props["Email"]
+              group_name = props["GroupName"]
+
+              try:
+                  cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)
+              except cognito.exceptions.UserNotFoundException:
+                  cognito.admin_create_user(
+                      UserPoolId=user_pool_id,
+                      Username=username,
+                      MessageAction="SUPPRESS",
+                      UserAttributes=[
+                          {"Name": "email", "Value": email},
+                          {"Name": "email_verified", "Value": "true"},
+                      ],
+                  )
+
+              cognito.admin_update_user_attributes(
+                  UserPoolId=user_pool_id,
+                  Username=username,
+                  UserAttributes=[
+                      {"Name": "email", "Value": email},
+                      {"Name": "email_verified", "Value": "true"},
+                  ],
+              )
+              cognito.admin_set_user_password(
+                  UserPoolId=user_pool_id,
+                  Username=username,
+                  Password=password,
+                  Permanent=True,
+              )
+              cognito.admin_add_user_to_group(
+                  UserPoolId=user_pool_id,
+                  Username=username,
+                  GroupName=group_name,
+              )
+
+          def handler(event, context):
+              try:
+                  request_type = event["RequestType"]
+                  props = event["ResourceProperties"]
+                  if request_type in ("Create", "Update"):
+                      ensure_user(props)
+                      send(event, context, "SUCCESS", {"Username": props["Username"]})
+                  else:
+                      send(event, context, "SUCCESS", {"Username": props["Username"]})
+              except Exception as exc:
+                  send(event, context, "FAILED", {}, str(exc))
+
+  CognitoSeedDefaultAdminUser:
+    Type: Custom::CognitoSeedUser
+    DependsOn:
+      - CognitoAdminGroup
+      - CognitoDefaultAdminUser
+    Properties:
+      ServiceToken: !GetAtt CognitoSeedUserFunction.Arn
+      UserPoolId: !Ref CognitoUserPool
+      Username: !Ref DefaultAdminUsername
+      Password: !Ref DefaultAdminPassword
+      Email: !Ref DefaultAdminEmail
+      GroupName: ADMIN
 
   # Publica o issuer esperado por ambiente para os consumidores das APIs
   CognitoIssuerParameter:
@@ -276,10 +998,14 @@ Resources:
 Outputs:
   RestApiId:
     Value: !Ref ApiGatewayRestApi
+  RestApiUrl:
+    Value: !Sub https://${ApiGatewayRestApi}.execute-api.${AWS::Region}.amazonaws.com/${StageName}
   CognitoUserPoolArn:
     Value: !GetAtt CognitoUserPool.Arn
   CognitoUserPoolClientId:
     Value: !Ref CognitoUserPoolClient
+  CognitoDefaultAdminUsername:
+    Value: !Ref DefaultAdminUsername
   CognitoJwtIssuerConfigured:
     Value: !If
       - IsDev
