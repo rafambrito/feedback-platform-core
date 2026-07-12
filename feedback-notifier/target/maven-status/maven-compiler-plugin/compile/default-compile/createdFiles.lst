@@ -5,6 +5,7 @@ com/feedback/platform/notifier/service/FeedbackNotificationConsumer$1.class
 com/feedback/platform/notifier/adapters/security/UserContext.class
 com/feedback/platform/notifier/repository/ses/SesNotificationSender.class
 com/feedback/platform/notifier/adapters/security/SecurityInterceptor.class
+com/feedback/platform/notifier/adapters/observability/RequestCorrelationFilter.class
 com/feedback/platform/notifier/repository/NotificationRepository.class
 com/feedback/platform/notifier/adapters/security/TokenValidationException.class
 com/feedback/platform/notifier/repository/NotificationSender.class

@@ -57,3 +57,15 @@ Este projeto utiliza Health Checks nativos via docker-compose.
 - Todos os serviços monitoram a saúde da porta de entrada correspondente.
 - Os microsserviços utilizam `depends_on` com `condition: service_healthy`, garantindo que a aplicação só suba após o LocalStack estar totalmente operacional.
 
+## 📈 Observabilidade
+
+Padrão adotado para os 3 serviços:
+
+- Logs estruturados em JSON
+- Correlação por request-id (headers `X-Request-Id` e fallback para `X-Trace-Id`)
+- Métricas mínimas de operação: invocações, erros (4xx/5xx) e latência (p50/p95/p99)
+
+Checklist operacional e definição de painel mínimo:
+
+- `docs/observability-checklist.md`
+

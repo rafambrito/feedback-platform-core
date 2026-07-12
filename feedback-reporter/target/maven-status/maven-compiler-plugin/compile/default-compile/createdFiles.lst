@@ -1,3 +1,4 @@
+com/feedback/platform/reporter/adapters/observability/RequestCorrelationFilter.class
 com/feedback/platform/reporter/adapters/security/TokenValidationException.class
 com/feedback/platform/reporter/service/FeedbackReportService.class
 com/feedback/platform/reporter/dto/FeedbackReportItemDTO.class

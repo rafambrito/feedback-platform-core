@@ -38,7 +38,13 @@ public class TokenValidationExceptionHandler implements ExceptionMapper<TokenVal
             return UUID.randomUUID().toString();
         }
 
-        String traceId = httpHeaders.getHeaderString("X-Trace-Id");
+        String traceId = httpHeaders.getHeaderString("X-Request-Id");
+        if (traceId == null || traceId.isBlank()) {
+            traceId = httpHeaders.getHeaderString("x-request-id");
+        }
+        if (traceId == null || traceId.isBlank()) {
+            traceId = httpHeaders.getHeaderString("X-Trace-Id");
+        }
         if (traceId == null || traceId.isBlank()) {
             traceId = httpHeaders.getHeaderString("x-trace-id");
         }

@@ -19,3 +19,4 @@ com/feedback/platform/event/EventPublisher.class
 com/feedback/platform/resource/FeedbackResource.class
 com/feedback/platform/resource/TokenValidationExceptionHandler.class
 com/feedback/platform/event/EventBridgeEventPublisher.class
+com/feedback/platform/adapters/observability/RequestCorrelationFilter.class

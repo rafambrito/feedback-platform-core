@@ -11,6 +11,7 @@
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/repository/NotificationSender.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/service/FeedbackNotificationConsumer.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/adapters/security/TokenValidationException.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/adapters/observability/RequestCorrelationFilter.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/config/AWSConfig.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/resource/RestExceptionHandler.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/adapters/security/TokenValidator.java
