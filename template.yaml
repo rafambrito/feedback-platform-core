@@ -770,19 +770,6 @@ Resources:
         IdToken: minutes
         RefreshToken: days
 
-  CognitoDefaultAdminUser:
-    Type: AWS::Cognito::UserPoolUser
-    Properties:
-      UserPoolId: !Ref CognitoUserPool
-      Username: !Ref DefaultAdminUsername
-      MessageAction: SUPPRESS
-      DesiredDeliveryMediums: []
-      UserAttributes:
-        - Name: email
-          Value: !Ref DefaultAdminEmail
-        - Name: email_verified
-          Value: "true"
-
   CognitoSeedUserRole:
     Type: AWS::IAM::Role
     Properties:
@@ -894,7 +881,6 @@ Resources:
     Type: Custom::CognitoSeedUser
     DependsOn:
       - CognitoAdminGroup
-      - CognitoDefaultAdminUser
     Properties:
       ServiceToken: !GetAtt CognitoSeedUserFunction.Arn
       UserPoolId: !Ref CognitoUserPool
