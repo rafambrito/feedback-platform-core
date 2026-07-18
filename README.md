@@ -17,7 +17,7 @@ A solução foi desenvolvida utilizando microsserviços, AWS Lambda e serviços 
 
 ### Swagger (Documentação da API)
 
-https://rafambrito.github.io/feedback-platform/
+https://rafambrito.github.io/feedback-platform-core/
 
 ### API (Ambiente DEV)
 
