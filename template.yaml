@@ -811,6 +811,14 @@ Resources:
 
           cognito = boto3.client("cognito-idp")
 
+          def normalize_username(raw_username, email):
+              # User pools configured with email alias reject usernames in email format.
+              candidate = raw_username or ""
+              if "@" in candidate:
+                  source = email or candidate
+                  candidate = source.replace("@", "_").replace(".", "_")
+              return candidate
+
           def send(event, context, status, data, reason=None):
               body = {
                   "Status": status,
@@ -833,7 +841,7 @@ Resources:
 
           def ensure_user(props):
               user_pool_id = props["UserPoolId"]
-              username = props["Username"]
+              username = normalize_username(props.get("Username"), props.get("Email"))
               password = props["Password"]
               email = props["Email"]
               group_name = props["GroupName"]
@@ -875,11 +883,12 @@ Resources:
               try:
                   request_type = event["RequestType"]
                   props = event["ResourceProperties"]
+                  effective_username = normalize_username(props.get("Username"), props.get("Email"))
                   if request_type in ("Create", "Update"):
                       ensure_user(props)
-                      send(event, context, "SUCCESS", {"Username": props["Username"]})
+                      send(event, context, "SUCCESS", {"Username": effective_username})
                   else:
-                      send(event, context, "SUCCESS", {"Username": props["Username"]})
+                      send(event, context, "SUCCESS", {"Username": effective_username})
               except Exception as exc:
                   send(event, context, "FAILED", {}, str(exc))
 
