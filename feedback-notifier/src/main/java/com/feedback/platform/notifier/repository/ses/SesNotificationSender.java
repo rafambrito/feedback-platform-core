@@ -13,6 +13,8 @@ import software.amazon.awssdk.services.ses.model.Destination;
 import software.amazon.awssdk.services.ses.model.Message;
 import software.amazon.awssdk.services.ses.model.SendEmailRequest;
 
+import java.util.Optional;
+
 @ApplicationScoped
 public class SesNotificationSender implements NotificationSender {
 
@@ -20,20 +22,33 @@ public class SesNotificationSender implements NotificationSender {
 
     private final SesClient sesClient;
     private final String fromEmail;
+        private final String toEmailOverride;
 
     @Inject
     public SesNotificationSender(
             SesClient sesClient,
-            @ConfigProperty(name = "aws.ses.from-email", defaultValue = "no-reply@feedback-platform.local") String fromEmail) {
+                        @ConfigProperty(name = "aws.ses.from-email", defaultValue = "no-reply@feedback-platform.local") String fromEmail,
+                        @ConfigProperty(name = "aws.ses.to-email-override") Optional<String> toEmailOverride) {
+                this(sesClient, fromEmail, toEmailOverride.orElse(""));
+        }
+
+        public SesNotificationSender(SesClient sesClient, String fromEmail) {
+                this(sesClient, fromEmail, "");
+        }
+
+        public SesNotificationSender(SesClient sesClient, String fromEmail, String toEmailOverride) {
         this.sesClient = sesClient;
         this.fromEmail = fromEmail;
+                this.toEmailOverride = toEmailOverride == null ? "" : toEmailOverride;
     }
 
     @Override
     public void enviar(Notificacao notificacao) {
+                String destinationEmail = toEmailOverride.isBlank() ? notificacao.email() : toEmailOverride;
+
         SendEmailRequest request = SendEmailRequest.builder()
                 .source(fromEmail)
-                .destination(Destination.builder().toAddresses(notificacao.email()).build())
+                                .destination(Destination.builder().toAddresses(destinationEmail).build())
                 .message(Message.builder()
                         .subject(Content.builder().data(notificacao.assunto()).build())
                         .body(Body.builder()
@@ -43,6 +58,10 @@ public class SesNotificationSender implements NotificationSender {
                 .build();
 
         sesClient.sendEmail(request);
-        LOG.infof("Email SES enviado para %s", notificacao.email());
+                if (toEmailOverride.isBlank()) {
+                        LOG.infof("Email SES enviado para %s", destinationEmail);
+                } else {
+                        LOG.infof("Email SES enviado para override %s (destino original=%s)", destinationEmail, notificacao.email());
+                }
     }
 }

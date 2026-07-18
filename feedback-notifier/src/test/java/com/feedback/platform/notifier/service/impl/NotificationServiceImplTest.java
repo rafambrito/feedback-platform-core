@@ -1,6 +1,8 @@
 package com.feedback.platform.notifier.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
 import com.feedback.platform.notifier.repository.NotificationSender;
@@ -168,8 +170,14 @@ class NotificationServiceImplTest {
     void testSimularRecebimento_Valido() throws Exception {
         // Arrange
         String messageBody = "{\"feedbackId\":\"f-1\",\"alunoId\":\"a-1\",\"professorId\":\"p-1\",\"urgencia\":\"CRITICA\"}";
+        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
+        rootNode.put("feedbackId", "f-1");
+        rootNode.put("alunoId", "a-1");
+        rootNode.put("professorId", "p-1");
+        rootNode.put("urgencia", "CRITICA");
 
-        when(objectMapper.readValue(messageBody, UrgencyNotification.class))
+        when(objectMapper.readTree(messageBody)).thenReturn(rootNode);
+        when(objectMapper.treeToValue(rootNode, UrgencyNotification.class))
             .thenReturn(new UrgencyNotification("f-1", "a-1", "p-1", "CRITICA"));
         when(repository.salvarSeAusente(any(Notificacao.class)))
                 .thenReturn(new Notificacao("id", "f-1", "p-1", "a-1", "CRITICA", "email", "assunto", "corpo",
@@ -181,6 +189,35 @@ class NotificationServiceImplTest {
 
         // Act & Assert
         assertDoesNotThrow(() -> service.simularRecebimento(messageBody));
-        verify(objectMapper, times(1)).readValue(messageBody, UrgencyNotification.class);
+        verify(objectMapper, times(1)).readTree(messageBody);
+        verify(objectMapper, times(1)).treeToValue(rootNode, UrgencyNotification.class);
+        }
+
+        @Test
+        void testSimularRecebimento_ComEnvelopeDetail() throws Exception {
+        String messageBody = "{\"detail\":{\"feedbackId\":\"f-2\",\"alunoId\":\"a-2\",\"professorId\":\"p-2\",\"urgencia\":\"ALTA\"}}";
+        ObjectNode detailNode = JsonNodeFactory.instance.objectNode();
+        detailNode.put("feedbackId", "f-2");
+        detailNode.put("alunoId", "a-2");
+        detailNode.put("professorId", "p-2");
+        detailNode.put("urgencia", "ALTA");
+
+        ObjectNode rootNode = JsonNodeFactory.instance.objectNode();
+        rootNode.set("detail", detailNode);
+
+        when(objectMapper.readTree(messageBody)).thenReturn(rootNode);
+        when(objectMapper.treeToValue(detailNode, UrgencyNotification.class))
+            .thenReturn(new UrgencyNotification("f-2", "a-2", "p-2", "ALTA"));
+        when(repository.salvarSeAusente(any(Notificacao.class)))
+            .thenReturn(new Notificacao("id-2", "f-2", "p-2", "a-2", "ALTA", "email", "assunto", "corpo",
+                Notificacao.StatusNotificacao.PENDENTE, java.time.Instant.now(), null));
+        doNothing().when(notificationSender).enviar(any(Notificacao.class));
+        when(repository.buscarPorId(anyString())).thenReturn(new Notificacao(
+            "id-2", "f-2", "p-2", "a-2", "ALTA", "email", "assunto", "corpo",
+            Notificacao.StatusNotificacao.ENVIADA, java.time.Instant.now(), java.time.Instant.now()));
+
+        assertDoesNotThrow(() -> service.simularRecebimento(messageBody));
+        verify(objectMapper, times(1)).readTree(messageBody);
+        verify(objectMapper, times(1)).treeToValue(detailNode, UrgencyNotification.class);
     }
 }

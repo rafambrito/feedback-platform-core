@@ -101,6 +101,14 @@ Parameters:
     NoEcho: true
     Default: Fiap2026Brito
     Description: Senha permanente do usuario padrao criado no Cognito
+  SesFromEmail:
+    Type: String
+    Default: no-reply@feedback-platform.local
+    Description: Email remetente usado pelo SES no notifier (deve ser identidade verificada no SES)
+  SesToEmailOverride:
+    Type: String
+    Default: ""
+    Description: Opcional. Se preenchido, direciona todos os envios para este email (util para SES sandbox)
 
 Conditions:
   IsDev: !Equals [!Ref StageName, dev]
@@ -1027,7 +1035,8 @@ Resources:
       Environment:
         Variables:
           AWS_DYNAMODB_NOTIFICATION_TABLE: !Ref NotificationTable
-          AWS_SES_FROM_EMAIL: no-reply@feedback-platform.local
+          AWS_SES_FROM_EMAIL: !Ref SesFromEmail
+          AWS_SES_TO_EMAIL_OVERRIDE: !Ref SesToEmailOverride
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref NotificationTable

@@ -1,6 +1,7 @@
 package com.feedback.platform.notifier.service.impl;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
@@ -98,12 +99,31 @@ public class NotificationServiceImpl implements NotificationService {
     public void simularRecebimento(String messageBody) {
         LOG.infof("Simulando recebimento de mensagem: %s", messageBody);
         try {
-            UrgencyNotification event = objectMapper.readValue(messageBody, UrgencyNotification.class);
+            UrgencyNotification event = parseUrgencyNotification(messageBody);
             processarNotificacao(event);
         } catch (JsonProcessingException e) {
             LOG.errorf(e, "Falha ao desserializar evento: %s", messageBody);
             throw new RuntimeException("Desserialização falhou", e);
         }
+    }
+
+    private UrgencyNotification parseUrgencyNotification(String messageBody) throws JsonProcessingException {
+        JsonNode root = objectMapper.readTree(messageBody);
+        if (root != null && root.isObject() && root.has("detail")) {
+            JsonNode detailNode = root.get("detail");
+            if (detailNode == null || detailNode.isNull()) {
+                throw new JsonProcessingException("Campo detail ausente no payload") {
+                };
+            }
+
+            if (detailNode.isTextual()) {
+                return objectMapper.readValue(detailNode.asText(), UrgencyNotification.class);
+            }
+
+            return objectMapper.treeToValue(detailNode, UrgencyNotification.class);
+        }
+
+        return objectMapper.treeToValue(root, UrgencyNotification.class);
     }
 
     private String gerarChaveIdempotencia(UrgencyNotification event) {
