@@ -43,9 +43,22 @@ jobs:
         run: sam build
       - name: Deploy SAM
         run: |
+          set +e
           sam deploy --no-confirm-changeset \
             --stack-name feedback-platform \
             --parameter-overrides StageName=dev \
             --capabilities CAPABILITY_IAM \
             --resolve-s3 \
             --region us-east-2
+          rc=$?
+          set -e
+
+          if [ $rc -ne 0 ]; then
+            echo "SAM deploy failed. Latest CREATE_FAILED events:"
+            aws cloudformation describe-stack-events \
+              --stack-name feedback-platform \
+              --region us-east-2 \
+              --query "StackEvents[?contains(ResourceStatus, 'FAILED')].[Timestamp,LogicalResourceId,ResourceType,ResourceStatusReason]" \
+              --output table || true
+            exit $rc
+          fi

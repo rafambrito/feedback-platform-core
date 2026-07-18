@@ -806,10 +806,9 @@ Resources:
       Code:
         ZipFile: |
           import json
-          import urllib3
+          import urllib.request
           import boto3
 
-          http = urllib3.PoolManager()
           cognito = boto3.client("cognito-idp")
 
           def send(event, context, status, data, reason=None):
@@ -823,7 +822,14 @@ Resources:
                   "Data": data,
               }
               encoded = json.dumps(body).encode("utf-8")
-              http.request("PUT", event["ResponseURL"], body=encoded, headers={"content-type": "", "content-length": str(len(encoded))})
+              request = urllib.request.Request(
+                  event["ResponseURL"],
+                  data=encoded,
+                  method="PUT",
+                  headers={"content-type": "", "content-length": str(len(encoded))},
+              )
+              with urllib.request.urlopen(request) as response:
+                  response.read()
 
           def ensure_user(props):
               user_pool_id = props["UserPoolId"]
