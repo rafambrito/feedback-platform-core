@@ -22,6 +22,8 @@ import jakarta.validation.ValidatorFactory;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.ses.SesClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -29,6 +31,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class NotifierLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(NotifierLambdaHandler.class);
 
     private static final Map<String, String> RESPONSE_HEADERS = Map.of(
             "Content-Type", "application/json",
@@ -196,10 +200,14 @@ public class NotifierLambdaHandler implements RequestHandler<APIGatewayProxyRequ
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
 
-        String region = readEnv("AWS_REGION", readEnv("AWS_DEFAULT_REGION", "us-east-1"));
+        String region = readEnv("AWS_REGION", readEnv("AWS_DEFAULT_REGION", "us-east-2"));
         String tableName = readEnv("AWS_DYNAMODB_NOTIFICATION_TABLE", readEnv("AWS_DYNAMODB_TABLE", "NotificacaoTable"));
         String fromEmail = readEnv("AWS_SES_FROM_EMAIL", "rafael.mendonca.brito@gmail.com");
         String toEmailOverride = readEnv("AWS_SES_TO_EMAIL_OVERRIDE", "rafael.mendonca.brito@gmail.com");
+
+        LOGGER.info("AWS_REGION={}", region);
+        LOGGER.info("FROM={}", fromEmail);
+        LOGGER.info("TO={}", toEmailOverride);
 
         DynamoDbClient dynamoDbClient = DynamoDbClient.builder()
                 .region(Region.of(region))

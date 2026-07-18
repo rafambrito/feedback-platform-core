@@ -5,8 +5,10 @@ import com.feedback.platform.notifier.repository.NotificationSender;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.jboss.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.ses.model.SesException;
 import software.amazon.awssdk.services.ses.model.Body;
 import software.amazon.awssdk.services.ses.model.Content;
 import software.amazon.awssdk.services.ses.model.Destination;
@@ -18,7 +20,7 @@ import java.util.Optional;
 @ApplicationScoped
 public class SesNotificationSender implements NotificationSender {
 
-    private static final Logger LOG = Logger.getLogger(SesNotificationSender.class);
+        private static final Logger LOGGER = LoggerFactory.getLogger(SesNotificationSender.class);
 
     private final SesClient sesClient;
     private final String fromEmail;
@@ -57,11 +59,17 @@ public class SesNotificationSender implements NotificationSender {
                         .build())
                 .build();
 
-        sesClient.sendEmail(request);
+                try {
+                        sesClient.sendEmail(request);
+                } catch (SesException e) {
+                        LOGGER.error("SES Error: {}", e.awsErrorDetails().errorMessage(), e);
+                        throw e;
+                }
+
                 if (toEmailOverride.isBlank()) {
-                        LOG.infof("Email SES enviado para %s", destinationEmail);
+                        LOGGER.info("Email SES enviado para {}", destinationEmail);
                 } else {
-                        LOG.infof("Email SES enviado para override %s (destino original=%s)", destinationEmail, notificacao.email());
+                        LOGGER.info("Email SES enviado para override {} (destino original={})", destinationEmail, notificacao.email());
                 }
     }
 }
