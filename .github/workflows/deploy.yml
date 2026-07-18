@@ -22,6 +22,23 @@ jobs:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-2
+      - name: Remove rollback-complete stack if present
+        run: |
+          set -euo pipefail
+          status=$(aws cloudformation describe-stacks \
+            --stack-name feedback-platform \
+            --region us-east-2 \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || true)
+
+          if [ "$status" = "ROLLBACK_COMPLETE" ]; then
+            aws cloudformation delete-stack \
+              --stack-name feedback-platform \
+              --region us-east-2
+            aws cloudformation wait stack-delete-complete \
+              --stack-name feedback-platform \
+              --region us-east-2
+          fi
       - name: Build SAM
         run: sam build
       - name: Deploy SAM

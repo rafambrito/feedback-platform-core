@@ -171,6 +171,8 @@ Deploy guiado:
 sam deploy --guided --region us-east-2
 ```
 
+Se a stack `feedback-platform` ficar em `ROLLBACK_COMPLETE` após uma tentativa anterior, apague a stack antes de redeployar ou use o pipeline atualizado, que remove esse estado automaticamente.
+
 Parâmetros recomendados no deploy:
 
 ```text
