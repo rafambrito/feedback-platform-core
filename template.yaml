@@ -111,6 +111,9 @@ Globals:
     Runtime: java21
     MemorySize: 1024
     Timeout: 30
+    Environment:
+      Variables:
+        SECURITY_INTERCEPTOR_ENABLED: "false"
 
 Resources:
   ApiGatewayRestApi:
@@ -968,12 +971,20 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /feedback
             Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
         CollectorGetFeedback:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /feedback/{id}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
 
   NotifierFunction:
     Type: AWS::Serverless::Function
@@ -990,18 +1001,30 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/urgent
             Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
         NotifierGetById:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/{id}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
         NotifierPostSimulate:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /notifications/test/simulate
             Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
 
   ReporterFunction:
     Type: AWS::Serverless::Function
@@ -1018,18 +1041,30 @@ Resources:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/professor/{professorId}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
         ReporterGetCurso:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/curso/{cursoId}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
         ReporterGetWeekly:
           Type: Api
           Properties:
             RestApiId: !Ref ApiGatewayRestApi
             Path: /reports/weekly
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
 
 Outputs:
   RestApiId:
