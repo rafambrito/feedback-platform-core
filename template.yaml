@@ -99,7 +99,7 @@ Parameters:
   DefaultAdminPassword:
     Type: String
     NoEcho: true
-    Default: fiap2026brito
+    Default: Fiap2026Brito
     Description: Senha permanente do usuario padrao criado no Cognito
 
 Conditions:
@@ -698,7 +698,7 @@ Resources:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: !Sub feedback-platform-user-pool-${StageName}
-      UsernameAttributes:
+      AliasAttributes:
         - email
       AutoVerifiedAttributes:
         - email
