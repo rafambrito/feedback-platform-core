@@ -15,11 +15,20 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
+    private static final Map<String, String> RESPONSE_HEADERS = Map.of(
+            "Content-Type", "application/json",
+            "Access-Control-Allow-Origin", "https://rafambrito.github.io",
+            "Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS",
+            "Access-Control-Allow-Headers", "Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token"
+    );
 
     private final ObjectMapper objectMapper;
     private final Validator validator;
@@ -41,7 +50,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         context.getLogger().log("[" + requestId + "] Iniciando processamento de coleta de feedback");
 
         try {
-            String body = event.getBody();
+            String body = resolveBody(event);
             if (body == null || body.isBlank()) {
                 context.getLogger().log("[" + requestId + "] Payload vazio");
                 return response(400, "Payload de entrada é obrigatório");
@@ -71,6 +80,19 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         }
     }
 
+    private String resolveBody(APIGatewayProxyRequestEvent event) {
+        String body = event.getBody();
+        if (body == null || body.isBlank()) {
+            return body;
+        }
+
+        if (Boolean.TRUE.equals(event.getIsBase64Encoded())) {
+            return new String(Base64.getDecoder().decode(body), StandardCharsets.UTF_8);
+        }
+
+        return body;
+    }
+
     private APIGatewayProxyResponseEvent response(int statusCode, String message) {
         String body;
         try {
@@ -81,7 +103,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
 
         return new APIGatewayProxyResponseEvent()
                 .withStatusCode(statusCode)
-                .withHeaders(Map.of("Content-Type", "application/json"))
+            .withHeaders(RESPONSE_HEADERS)
                 .withBody(body);
     }
 }

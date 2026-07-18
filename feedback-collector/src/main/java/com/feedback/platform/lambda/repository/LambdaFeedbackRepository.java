@@ -1,5 +1,6 @@
 package com.feedback.platform.lambda.repository;
 
+import com.feedback.platform.domain.Criticidade;
 import com.feedback.platform.lambda.dto.FeedbackRequestDTO;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
@@ -11,6 +12,7 @@ import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -26,14 +28,18 @@ public class LambdaFeedbackRepository {
     }
 
     public void save(FeedbackRequestDTO request, String requestId) {
+        Instant dataCriacao = Instant.now();
+        Criticidade criticidade = avaliarCriticidade(request.nota());
+
         Map<String, AttributeValue> item = new HashMap<>();
         item.put("id", AttributeValue.builder().s(UUID.randomUUID().toString()).build());
-        item.put("professorId", AttributeValue.builder().s(request.professorId()).build());
         item.put("cursoId", AttributeValue.builder().s(request.cursoId()).build());
-        item.put("nota", AttributeValue.builder().n(request.nota().toString()).build());
+        item.put("alunoId", AttributeValue.builder().s(request.alunoId()).build());
+        item.put("professorId", AttributeValue.builder().s(request.professorId()).build());
+        item.put("nota", AttributeValue.builder().n(Integer.toString(request.nota())).build());
         item.put("comentario", AttributeValue.builder().s(request.comentario()).build());
-        item.put("urgencia", AttributeValue.builder().s(request.urgencia()).build());
-        item.put("timestamp", AttributeValue.builder().s(request.timestamp().toString()).build());
+        item.put("criticidade", AttributeValue.builder().s(criticidade.name()).build());
+        item.put("dataCriacao", AttributeValue.builder().s(dataCriacao.toString()).build());
         item.put("requestId", AttributeValue.builder().s(requestId).build());
 
         PutItemRequest putItemRequest = PutItemRequest.builder()
@@ -42,6 +48,16 @@ public class LambdaFeedbackRepository {
                 .build();
 
         dynamoDbClient.putItem(putItemRequest);
+    }
+
+    private Criticidade avaliarCriticidade(int nota) {
+        if (nota < 3) {
+            return Criticidade.ALTA;
+        }
+        if (nota <= 6) {
+            return Criticidade.MEDIA;
+        }
+        return Criticidade.BAIXA;
     }
 
     private DynamoDbClient buildClient() {
