@@ -20,6 +20,66 @@ href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"/>
 
 <script>
 
+function processSwaggerOauthPayload(params) {
+	var oauth2 = window.swaggerUIRedirectOauth2;
+	if (!oauth2) {
+		return;
+	}
+
+	var sentState = oauth2.state;
+	var redirectUrl = oauth2.redirectUrl;
+	var isValid = params.state === sentState;
+	var flow = oauth2.auth && oauth2.auth.schema && oauth2.auth.schema.get("flow");
+
+	if ((flow === "accessCode" || flow === "authorizationCode" || flow === "authorization_code") && !oauth2.auth.code) {
+		if (!isValid) {
+			oauth2.errCb({
+				authId: oauth2.auth.name,
+				source: "auth",
+				level: "warning",
+				message: "Authorization may be unsafe, passed state was changed in server. Passed state wasn't returned from auth server"
+			});
+		}
+
+		if (params.code) {
+			delete oauth2.state;
+			oauth2.auth.code = params.code;
+			oauth2.callback({ auth: oauth2.auth, redirectUrl: redirectUrl });
+		} else {
+			var msg;
+			if (params.error) {
+				msg = "[" + params.error + "]: " +
+					(params.error_description ? params.error_description + ". " : "no accessCode received from the server. ") +
+					(params.error_uri ? "More info: " + params.error_uri : "");
+			}
+
+			oauth2.errCb({
+				authId: oauth2.auth.name,
+				source: "auth",
+				level: "error",
+				message: msg || "[Authorization failed]: no accessCode received from the server"
+			});
+		}
+	} else {
+		oauth2.callback({
+			auth: oauth2.auth,
+			token: params,
+			isValid: isValid,
+			redirectUrl: redirectUrl
+		});
+	}
+}
+
+// Fallback channel for browsers/providers that sever window.opener in OAuth popups.
+var oauthBridgeChannel = new BroadcastChannel("swagger-oauth2-bridge");
+oauthBridgeChannel.onmessage = function(event) {
+	var data = event && event.data;
+	if (!data || data.type !== "swagger-oauth2-redirect" || !data.params) {
+		return;
+	}
+	processSwaggerOauthPayload(data.params);
+};
+
 window.onload = () => {
 
 const ui = SwaggerUIBundle({

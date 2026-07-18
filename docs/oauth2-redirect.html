@@ -8,15 +8,7 @@
 <script>
 "use strict";
 
-function run() {
-  var oauth2 = window.opener && window.opener.swaggerUIRedirectOauth2;
-  if (!oauth2) {
-    window.close();
-    return;
-  }
-
-  var sentState = oauth2.state;
-  var redirectUrl = oauth2.redirectUrl;
+function parseOauthParams() {
   var qp = /code|token|error/.test(window.location.hash)
     ? window.location.hash.substring(1).replace("?", "&")
     : window.location.search.substring(1);
@@ -26,11 +18,35 @@ function run() {
     a[i] = '"' + v.replace("=", '":"') + '"';
   });
 
-  var params = arr.length
+  return arr.length
     ? JSON.parse("{" + arr.join() + "}", function(key, value) {
         return key === "" ? value : decodeURIComponent(value);
       })
     : {};
+}
+
+function run() {
+  var params = parseOauthParams();
+  var oauth2 = window.opener && window.opener.swaggerUIRedirectOauth2;
+
+  // If opener is not available, send payload to the main page via BroadcastChannel.
+  if (!oauth2) {
+    try {
+      var channel = new BroadcastChannel("swagger-oauth2-bridge");
+      channel.postMessage({ type: "swagger-oauth2-redirect", params: params });
+      channel.close();
+    } catch (e) {
+      var pre = document.createElement("pre");
+      pre.textContent = "OAuth redirect received, but could not communicate with Swagger UI: " + String(e);
+      document.body.appendChild(pre);
+      return;
+    }
+    window.close();
+    return;
+  }
+
+  var sentState = oauth2.state;
+  var redirectUrl = oauth2.redirectUrl;
 
   var isValid = params.state === sentState;
   var flow = oauth2.auth && oauth2.auth.schema && oauth2.auth.schema.get("flow");
