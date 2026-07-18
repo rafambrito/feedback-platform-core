@@ -9,6 +9,8 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
+import software.amazon.awssdk.services.dynamodb.model.GetItemResponse;
 import software.amazon.awssdk.services.dynamodb.model.PutItemRequest;
 
 import java.net.URI;
@@ -48,6 +50,23 @@ public class LambdaFeedbackRepository {
                 .build();
 
         dynamoDbClient.putItem(putItemRequest);
+    }
+
+    public Map<String, AttributeValue> findById(String id) {
+        Map<String, AttributeValue> key = new HashMap<>();
+        key.put("id", AttributeValue.builder().s(id).build());
+
+        GetItemRequest getItemRequest = GetItemRequest.builder()
+                .tableName(tableName)
+                .key(key)
+                .build();
+
+        GetItemResponse response = dynamoDbClient.getItem(getItemRequest);
+        if (response == null || response.item() == null || response.item().isEmpty()) {
+            return null;
+        }
+
+        return response.item();
     }
 
     private Criticidade avaliarCriticidade(int nota) {

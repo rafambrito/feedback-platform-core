@@ -4,6 +4,7 @@
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/event/CriticalFeedbackPublicationTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/service/FeedbackServiceImplTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/collector/service/FeedbackServiceImplTest.java
+/home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/lambda/CollectorLambdaHandlerTest.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/resource/NoAuthTestProfile.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/integration/DynamoDbLocalResource.java
 /home/rafael/git/feedback-platform-core/feedback-collector/src/test/java/com/feedback/platform/domain/UsuarioTest.java
