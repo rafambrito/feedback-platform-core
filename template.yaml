@@ -121,7 +121,20 @@ Resources:
       Cors:
         AllowOrigin: "'https://rafambrito.github.io'"
         AllowMethods: "'GET,POST,PUT,DELETE,OPTIONS'"
-        AllowHeaders: "'Content-Type,Authorization'"
+        AllowHeaders: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'https://rafambrito.github.io'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: "'https://rafambrito.github.io'"
+              Access-Control-Allow-Headers: "'Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'"
+              Access-Control-Allow-Methods: "'GET,POST,PUT,DELETE,OPTIONS'"
       OpenApiVersion: 3.0.3
       MergeDefinitions: true
       DefinitionBody:
@@ -138,7 +151,7 @@ Resources:
             - exemplos de payload para teste rapido
             - respostas de erro padronizadas para 4xx e 5xx
         servers:
-          - url: https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev
+          - url: https://a40xikye61.execute-api.us-east-2.amazonaws.com/dev
             description: Ambiente dev publicado na AWS
         tags:
           - name: Feedback
@@ -694,6 +707,7 @@ Resources:
             validateRequestParameters: false
       Auth:
         DefaultAuthorizer: CognitoUserPoolAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
         Authorizers:
           CognitoUserPoolAuthorizer:
             UserPoolArn: !GetAtt CognitoUserPool.Arn
