@@ -1,193 +1,311 @@
 # Feedback Platform
 
-**Fase 4 – Tech Challenge - FIAP Pós Tech – Arquitetura e Desenvolvimento em JAVA**
-
-## 🧭 Visão geral
-
-Ecossistema de microsserviços para gestão e análise de feedbacks acadêmicos. Desenvolvido para processar, notificar e reportar avaliações de cursos de forma ágil e resiliente, otimizando a tomada de decisão no ambiente acadêmico.
-
-## 🚀 Componentes do Sistema
-
-* 📝 **`feedback-collector`**: API de entrada responsável pela coleta e persistência de feedbacks no DynamoDB e publicação de eventos críticos.
-* 🔔 **`feedback-notifier`**: Consumidor de mensagens (SQS) que processa e dispara notificações automáticas para feedbacks críticos.
-* 📊 **`feedback-reporter`**: Interface de consulta que agrega e expõe relatórios detalhados por professor e curso.
+**Tech Challenge – Fase 4**  
+**FIAP Pós Tech – Arquitetura e Desenvolvimento em Java**
 
 ---
 
-## 🧱 Estrutura
+# 📖 Visão Geral
+
+Feedback Platform é uma plataforma **serverless** para coleta, processamento e análise de feedbacks acadêmicos.
+
+A solução foi desenvolvida utilizando microsserviços, AWS Lambda e serviços gerenciados da AWS para oferecer escalabilidade, baixo acoplamento e processamento orientado a eventos.
+
+---
+
+# 🔗 Links
+
+### Swagger (Documentação da API)
+
+https://rafambrito.github.io/feedback-platform/
+
+### API (Ambiente DEV)
+
+https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev
+
+---
+
+# 🏗️ Arquitetura
+
+A solução adota uma arquitetura **Serverless Event-Driven**.
+
+Fluxo simplificado:
+
+```text
+                        GitHub Actions
+                              │
+                              ▼
+                         AWS SAM Deploy
+                              │
+                              ▼
+                         Amazon API Gateway
+                              │
+               ┌──────────────┼──────────────┐
+               ▼              ▼              ▼
+        Feedback Collector  Reporter     Notifier
+               │                             │
+               │                             ▼
+               │                         Amazon SQS
+               │                             │
+               ▼                             ▼
+          Amazon DynamoDB             Amazon SES
+               │
+               ▼
+        Amazon EventBridge
+```
+
+---
+
+# 🚀 Microsserviços
+
+### 📝 feedback-collector
+
+Responsável por:
+
+- receber feedbacks
+- validar dados
+- persistir informações no DynamoDB
+- publicar eventos críticos no EventBridge
+
+---
+
+### 🔔 feedback-notifier
+
+Responsável por:
+
+- consumir mensagens da fila SQS
+- processar notificações
+- enviar e-mails utilizando Amazon SES
+
+---
+
+### 📊 feedback-reporter
+
+Responsável por:
+
+- consultar feedbacks
+- consolidar informações
+- disponibilizar relatórios por professor e curso
+
+---
+
+# 🛠️ Tecnologias
+
+- Java 21
+- AWS Lambda
+- AWS SAM
+- Amazon API Gateway
+- Amazon Cognito
+- Amazon DynamoDB
+- Amazon EventBridge
+- Amazon SQS
+- Amazon SES
+- Maven
+- Docker
+- OpenAPI 3
+- GitHub Actions
+
+---
+
+# 🧱 Estrutura do Projeto
 
 ```text
 feedback-platform-core/
-├── pom.xml             # Agregador Maven
-├── docker-compose.yml  # Orquestração do ambiente
+├── pom.xml
+├── docker-compose.yml
+├── template.yaml
+├── openapi.yaml
+├── docs/
+│   ├── index.html
+│   └── openapi.yaml
 ├── feedback-collector/
 ├── feedback-notifier/
 └── feedback-reporter/
 ```
 
-## 🛠️ Comandos de Desenvolvimento
+---
 
-### Build Unificado
+# 📘 Documentação da API
 
-Para compilar todos os serviços e suas dependências:
+A API segue a especificação **OpenAPI 3**.
 
-```bash
-mvn clean install
-```
+A documentação está disponível em:
 
-### Subir o Ambiente Completo
+- Swagger UI
+- arquivo `openapi.yaml`
 
-Para iniciar toda a infraestrutura local (LocalStack + Microsserviços):
+A documentação contempla:
 
-```bash
-docker-compose up --build
-```
+- endpoints
+- parâmetros
+- payloads
+- responses
+- autenticação JWT
+- exemplos de requisição
 
-O que o ambiente compõe:
+---
 
-- ☁️ **LocalStack**: Emula AWS (DynamoDB, SQS, EventBridge) na porta 4566.
-- 📝 **Collector**: Disponível em http://localhost:8080.
-- 🔔 **Notifier**: Disponível em http://localhost:8081.
-- 📊 **Reporter**: Disponível em http://localhost:8082.
+# 🔐 Autenticação
 
-## ✅ Infraestrutura e Resiliência
+A API utiliza autenticação baseada em **JWT** através do **Amazon Cognito**.
 
-Este projeto utiliza Health Checks nativos via docker-compose.
+Durante o deploy são provisionados automaticamente:
 
-- Todos os serviços monitoram a saúde da porta de entrada correspondente.
-- Os microsserviços utilizam `depends_on` com `condition: service_healthy`, garantindo que a aplicação só suba após o LocalStack estar totalmente operacional.
+- User Pool
+- User Pool Client
+- Grupo ADMIN
 
-## 📈 Observabilidade
-
-Padrão adotado para os 3 serviços:
-
-- Logs estruturados em JSON
-- Correlação por request-id (headers `X-Request-Id` e fallback para `X-Trace-Id`)
-- Métricas mínimas de operação: invocações, erros (4xx/5xx) e latência (p50/p95/p99)
-
-Checklist operacional e definição de painel mínimo:
-
-- `docs/observability-checklist.md`
-
-## 📘 Documentação da API
-
-O contrato OpenAPI mantido na raiz do projeto está em `openapi.yaml` e documenta todos os endpoints expostos pelas Lambdas com:
-
-- rotas, métodos e parâmetros
-- request bodies e responses
-- autenticação Bearer JWT com Amazon Cognito
-- exemplos de payload para testes rápidos
-
-Endpoint publicado em dev:
-
-- `https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev`
-
-Observação importante sobre AWS SAM:
-
-- o arquivo `openapi.yaml` é a referência legível do contrato para o time
-- para manter compatibilidade com `sam validate` usando `Auth` Cognito, o mesmo contrato também foi embutido em `DefinitionBody` dentro de `template.yaml`, porque o SAM exige definição inline para aplicar authorizers Cognito
-
-## 🔐 Autenticação Cognito
-
-O `template.yaml` provisiona:
-
-- `AWS::Cognito::UserPool`
-- `AWS::Cognito::UserPoolClient`
-- grupo `ADMIN`
-- usuário padrão para testes
-
-Credenciais padrão de teste:
-
-- usuário: `admin@admin.com`
-- senha: `Fiap2026Brito`
-
-O usuário é criado como permanente via custom resource no deploy. Se quiser sobrescrever em outro ambiente, passe os parâmetros abaixo no deploy:
+Os dados do usuário administrador podem ser personalizados utilizando os parâmetros:
 
 - `DefaultAdminUsername`
 - `DefaultAdminEmail`
 - `DefaultAdminPassword`
 
-## 🧪 Como testar a API
+---
 
-### 1. Gerar token no Cognito
+# 🧪 Testando a API
 
-Exemplo com AWS CLI usando fluxo de senha:
+## 1. Obter um Access Token
+
+Exemplo utilizando AWS CLI:
 
 ```bash
 aws cognito-idp initiate-auth \
-	--region us-east-2 \
-	--client-id <COGNITO_USER_POOL_CLIENT_ID> \
-	--auth-flow USER_PASSWORD_AUTH \
-	--auth-parameters USERNAME=admin@admin.com,PASSWORD=Fiap2026Brito
+  --region us-east-2 \
+  --client-id <COGNITO_USER_POOL_CLIENT_ID> \
+  --auth-flow USER_PASSWORD_AUTH \
+  --auth-parameters USERNAME=<usuario>,PASSWORD=<senha>
 ```
 
-Use o `AccessToken` retornado no cabeçalho:
+Utilize o token retornado:
 
-```bash
+```text
 Authorization: Bearer <ACCESS_TOKEN>
 ```
 
-### 2. Testar endpoints
+---
 
-Criar feedback:
-
-```bash
-curl -X POST 'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/feedback' \
-	-H 'Authorization: Bearer <ACCESS_TOKEN>' \
-	-H 'Content-Type: application/json' \
-	-d '{
-		"cursoId": "1TIA",
-		"alunoId": "aluno-001",
-		"professorId": "prof-123",
-		"nota": 9,
-		"comentario": "Aula clara, com boa explicacao dos exercicios."
-	}'
-```
-
-Consultar relatório semanal:
+## 2. Criar um Feedback
 
 ```bash
-curl 'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/reports/weekly?courseId=1TIA' \
-	-H 'Authorization: Bearer <ACCESS_TOKEN>'
+curl -X POST \
+'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/feedback' \
+-H 'Authorization: Bearer <ACCESS_TOKEN>' \
+-H 'Content-Type: application/json' \
+-d '{
+  "cursoId":"1TIA",
+  "alunoId":"aluno-001",
+  "professorId":"prof-123",
+  "nota":9,
+  "comentario":"Aula clara, com boa explicação dos exercícios."
+}'
 ```
 
-## ☁️ Fluxo SAM
+---
 
-Validar template:
+## 3. Consultar Relatório
+
+```bash
+curl \
+'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/reports/weekly?courseId=1TIA' \
+-H 'Authorization: Bearer <ACCESS_TOKEN>'
+```
+
+---
+
+# ☁️ Desenvolvimento Local
+
+## Build
+
+```bash
+mvn clean install
+```
+
+---
+
+## Subir o ambiente
+
+```bash
+docker-compose up --build
+```
+
+O ambiente inicia:
+
+- LocalStack
+- Feedback Collector
+- Feedback Notifier
+- Feedback Reporter
+
+---
+
+# 🔍 Observabilidade
+
+Padrão adotado em todos os microsserviços:
+
+- logs estruturados em JSON
+- correlação por Request ID
+- métricas de latência
+- métricas de erros
+- métricas de invocações
+
+Checklist operacional:
+
+```text
+docs/observability-checklist.md
+```
+
+---
+
+# 🚀 Deploy AWS SAM
+
+Validar:
 
 ```bash
 sam validate --region us-east-2
 ```
 
-Build da aplicação:
+Build:
 
 ```bash
 sam build --region us-east-2
 ```
 
-Deploy guiado:
+Deploy:
 
 ```bash
 sam deploy --guided --region us-east-2
 ```
 
-Se a stack `feedback-platform` ficar em `ROLLBACK_COMPLETE` após uma tentativa anterior, apague a stack antes de redeployar ou use o pipeline atualizado, que remove esse estado automaticamente.
-
-Parâmetros recomendados no deploy:
+Parâmetros recomendados:
 
 ```text
 StageName=dev
+
 DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
+
 HmlJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
+
 PrdJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
 ```
 
-## ✅ Validação executada
+---
 
-Validações executadas neste repositório após as alterações:
+# ✅ Funcionalidades
 
-- `sam validate --region us-east-2`: sucesso
-- `sam build --region us-east-2`: sucesso
+- Coleta de feedbacks
+- Processamento orientado a eventos
+- Persistência em DynamoDB
+- Notificações automáticas
+- Relatórios acadêmicos
+- API protegida por Cognito
+- Documentação OpenAPI
+- Deploy automatizado com GitHub Actions
+- Infraestrutura como código utilizando AWS SAM
 
-O deploy real em AWS não foi executado neste ambiente porque depende das suas credenciais, confirmação de stack e parâmetros finais de infraestrutura.
+---
 
+# 👨‍💻 Autor
+
+**Rafael Mendonça de Brito (RM369933)**
+
+FIAP Pós Tech — Arquitetura e Desenvolvimento em Java
