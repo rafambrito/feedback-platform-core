@@ -4,6 +4,7 @@
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/repository/ses/SesNotificationSender.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/resource/TokenValidationExceptionHandler.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/adapters/security/SecurityInterceptor.java
+/home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/lambda/NotifierLambdaHandler.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/adapters/security/UserContext.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/repository/NotificationRepository.java
 /home/rafael/git/feedback-platform-core/feedback-notifier/src/main/java/com/feedback/platform/notifier/dto/NotificationResponseDTO.java

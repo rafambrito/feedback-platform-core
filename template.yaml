@@ -968,6 +968,18 @@ Resources:
         - AttributeName: id
           KeyType: HASH
 
+  NotificationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub feedback-platform-notification-${StageName}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
   CollectorFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -1012,6 +1024,19 @@ Resources:
       FunctionName: !Sub feedback-notifier-${StageName}
       CodeUri: .
       Handler: com.feedback.platform.notifier.lambda.NotifierLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          AWS_DYNAMODB_NOTIFICATION_TABLE: !Ref NotificationTable
+          AWS_SES_FROM_EMAIL: no-reply@feedback-platform.local
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref NotificationTable
+        - Statement:
+            - Effect: Allow
+              Action:
+                - ses:SendEmail
+                - ses:SendRawEmail
+              Resource: "*"
       Events:
         NotifierPostUrgent:
           Type: Api

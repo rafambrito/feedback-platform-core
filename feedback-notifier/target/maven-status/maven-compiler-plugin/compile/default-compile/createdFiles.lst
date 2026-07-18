@@ -14,6 +14,7 @@ com/feedback/platform/notifier/dto/NotificationResponseDTO.class
 com/feedback/platform/notifier/service/impl/NotificationServiceImpl.class
 com/feedback/platform/notifier/resource/RestExceptionHandler.class
 com/feedback/platform/notifier/domain/Notificacao.class
+com/feedback/platform/notifier/lambda/NotifierLambdaHandler.class
 com/feedback/platform/notifier/service/FeedbackNotificationConsumer.class
 com/feedback/platform/notifier/adapters/security/TokenValidator.class
 com/feedback/platform/notifier/repository/dynamodb/DynamoDBNotificationRepository.class
