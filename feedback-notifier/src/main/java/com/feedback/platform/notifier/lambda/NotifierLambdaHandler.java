@@ -198,8 +198,8 @@ public class NotifierLambdaHandler implements RequestHandler<APIGatewayProxyRequ
 
         String region = readEnv("AWS_REGION", readEnv("AWS_DEFAULT_REGION", "us-east-1"));
         String tableName = readEnv("AWS_DYNAMODB_NOTIFICATION_TABLE", readEnv("AWS_DYNAMODB_TABLE", "NotificacaoTable"));
-        String fromEmail = readEnv("AWS_SES_FROM_EMAIL", "no-reply@feedback-platform.local");
-        String toEmailOverride = readEnv("AWS_SES_TO_EMAIL_OVERRIDE", "");
+        String fromEmail = readEnv("AWS_SES_FROM_EMAIL", "rafael.mendonca.brito@gmail.com");
+        String toEmailOverride = readEnv("AWS_SES_TO_EMAIL_OVERRIDE", "rafael.mendonca.brito@gmail.com");
 
         DynamoDbClient dynamoDbClient = DynamoDbClient.builder()
                 .region(Region.of(region))

@@ -290,7 +290,17 @@ sam build --region us-east-2
 Deploy:
 
 ```bash
-sam deploy --guided --region us-east-2
+sam deploy \
+     --template-file .aws-sam/build/template.yaml \
+     --stack-name feedback-platform-core-dev \
+     --region us-east-2 \
+     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+     --resolve-s3 \
+     --no-confirm-changeset \
+     --no-fail-on-empty-changeset \
+     --parameter-overrides \
+          StageName=dev \
+          DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/us-east-2_uqihO61Nf
 ```
 
 Parâmetros recomendados:
@@ -298,11 +308,7 @@ Parâmetros recomendados:
 ```text
 StageName=dev
 
-DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
-
-HmlJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
-
-PrdJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/<USER_POOL_ID>
+DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/us-east-2_uqihO61Nf
 ```
 
 ---

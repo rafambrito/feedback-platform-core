@@ -8,86 +8,32 @@ Parameters:
     Default: dev
     AllowedValues:
       - dev
-      - hml
-      - prd
   DevJwtIssuer:
     Type: String
     Default: https://cognito-idp.us-east-1.amazonaws.com/dev-user-pool-id
     Description: Issuer JWT esperado no ambiente dev
-  HmlJwtIssuer:
-    Type: String
-    Default: https://cognito-idp.us-east-1.amazonaws.com/hml-user-pool-id
-    Description: Issuer JWT esperado no ambiente hml
-  PrdJwtIssuer:
-    Type: String
-    Default: https://cognito-idp.us-east-1.amazonaws.com/prd-user-pool-id
-    Description: Issuer JWT esperado no ambiente prd
   DevOAuthScopes:
     Type: CommaDelimitedList
     Default: openid,email,profile
     Description: Escopos OAuth permitidos para dev
-  HmlOAuthScopes:
-    Type: CommaDelimitedList
-    Default: openid,email,profile
-    Description: Escopos OAuth permitidos para hml
-  PrdOAuthScopes:
-    Type: CommaDelimitedList
-    Default: openid,email,profile
-    Description: Escopos OAuth permitidos para prd
   DevAccessTokenValidityMinutes:
     Type: Number
     Default: 60
     MinValue: 5
     MaxValue: 1440
     Description: Validade do Access Token (minutos) em dev
-  HmlAccessTokenValidityMinutes:
-    Type: Number
-    Default: 30
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do Access Token (minutos) em hml
-  PrdAccessTokenValidityMinutes:
-    Type: Number
-    Default: 15
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do Access Token (minutos) em prd
   DevIdTokenValidityMinutes:
     Type: Number
     Default: 60
     MinValue: 5
     MaxValue: 1440
     Description: Validade do ID Token (minutos) em dev
-  HmlIdTokenValidityMinutes:
-    Type: Number
-    Default: 30
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do ID Token (minutos) em hml
-  PrdIdTokenValidityMinutes:
-    Type: Number
-    Default: 15
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do ID Token (minutos) em prd
   DevRefreshTokenValidityDays:
     Type: Number
     Default: 30
     MinValue: 1
     MaxValue: 3650
     Description: Validade do Refresh Token (dias) em dev
-  HmlRefreshTokenValidityDays:
-    Type: Number
-    Default: 15
-    MinValue: 1
-    MaxValue: 3650
-    Description: Validade do Refresh Token (dias) em hml
-  PrdRefreshTokenValidityDays:
-    Type: Number
-    Default: 7
-    MinValue: 1
-    MaxValue: 3650
-    Description: Validade do Refresh Token (dias) em prd
   DefaultAdminUsername:
     Type: String
     Default: admin@admin.com
@@ -103,16 +49,15 @@ Parameters:
     Description: Senha permanente do usuario padrao criado no Cognito
   SesFromEmail:
     Type: String
-    Default: no-reply@feedback-platform.local
+    Default: rafael.mendonca.brito@gmail.com
     Description: Email remetente usado pelo SES no notifier (deve ser identidade verificada no SES)
   SesToEmailOverride:
     Type: String
-    Default: ""
+    Default: rafael.mendonca.brito@gmail.com
     Description: Opcional. Se preenchido, direciona todos os envios para este email (util para SES sandbox)
 
 Conditions:
   IsDev: !Equals [!Ref StageName, dev]
-  IsHml: !Equals [!Ref StageName, hml]
 
 Globals:
   Function:
@@ -780,36 +725,12 @@ Resources:
         - https://rafambrito.github.io/
         - https://rafambrito.github.io/feedback-platform-core/
         - https://localhost/signout
-      AllowedOAuthScopes: !If
-        - IsDev
-        - !Ref DevOAuthScopes
-        - !If
-          - IsHml
-          - !Ref HmlOAuthScopes
-          - !Ref PrdOAuthScopes
+      AllowedOAuthScopes: !Ref DevOAuthScopes
       SupportedIdentityProviders:
         - COGNITO
-      AccessTokenValidity: !If
-        - IsDev
-        - !Ref DevAccessTokenValidityMinutes
-        - !If
-          - IsHml
-          - !Ref HmlAccessTokenValidityMinutes
-          - !Ref PrdAccessTokenValidityMinutes
-      IdTokenValidity: !If
-        - IsDev
-        - !Ref DevIdTokenValidityMinutes
-        - !If
-          - IsHml
-          - !Ref HmlIdTokenValidityMinutes
-          - !Ref PrdIdTokenValidityMinutes
-      RefreshTokenValidity: !If
-        - IsDev
-        - !Ref DevRefreshTokenValidityDays
-        - !If
-          - IsHml
-          - !Ref HmlRefreshTokenValidityDays
-          - !Ref PrdRefreshTokenValidityDays
+      AccessTokenValidity: !Ref DevAccessTokenValidityMinutes
+      IdTokenValidity: !Ref DevIdTokenValidityMinutes
+      RefreshTokenValidity: !Ref DevRefreshTokenValidityDays
       TokenValidityUnits:
         AccessToken: minutes
         IdToken: minutes
@@ -949,19 +870,13 @@ Resources:
       Email: !Ref DefaultAdminEmail
       GroupName: ADMIN
 
-  # Publica o issuer esperado por ambiente para os consumidores das APIs
+  # Publica o issuer esperado para o ambiente dev para os consumidores das APIs
   CognitoIssuerParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub /feedback-platform/${StageName}/cognito/issuer
       Type: String
-      Value: !If
-        - IsDev
-        - !Ref DevJwtIssuer
-        - !If
-          - IsHml
-          - !Ref HmlJwtIssuer
-          - !Ref PrdJwtIssuer
+      Value: !Ref DevJwtIssuer
       Description: Issuer JWT esperado para validacao de tokens
 
   FeedbackTable:
@@ -1136,12 +1051,6 @@ Outputs:
   CognitoDefaultAdminUsername:
     Value: !Ref DefaultAdminUsername
   CognitoJwtIssuerConfigured:
-    Value: !If
-      - IsDev
-      - !Ref DevJwtIssuer
-      - !If
-        - IsHml
-        - !Ref HmlJwtIssuer
-        - !Ref PrdJwtIssuer
+    Value: !Ref DevJwtIssuer
   CognitoJwtIssuerFromPool:
     Value: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
