@@ -161,7 +161,8 @@ Resources:
           - name: Reports
             description: Consultas analiticas e relatorios
         security:
-          - CognitoBearerAuth: []
+          - CognitoOAuth2:
+              - openid
         paths:
           /feedback:
             post:
@@ -420,13 +421,16 @@ Resources:
                   $ref: '#/components/responses/InternalServerError'
         components:
           securitySchemes:
-            CognitoBearerAuth:
-              type: http
-              scheme: bearer
-              bearerFormat: JWT
+            CognitoOAuth2:
+              type: oauth2
+              flows:
+                authorizationCode:
+                  authorizationUrl: !Sub https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize
+                  tokenUrl: !Sub https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token
+                  scopes:
+                    openid: Escopo padrao para autenticacao via Cognito.
               description: |
-                Access token emitido pelo Amazon Cognito User Pool configurado no API Gateway.
-                Envie o cabecalho Authorization no formato Bearer <token>.
+                Fluxo OAuth2 Authorization Code via Amazon Cognito para uso do botao Authorize no Swagger UI.
           parameters:
             FeedbackId:
               name: id
@@ -729,6 +733,12 @@ Resources:
           RequireSymbols: false
           RequireUppercase: true
 
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain: !Sub feedback-platform-${StageName}-${AWS::AccountId}
+      UserPoolId: !Ref CognitoUserPool
+
   CognitoAdminGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
@@ -750,8 +760,14 @@ Resources:
       AllowedOAuthFlows:
         - code
       CallbackURLs:
+        - https://rafambrito.github.io/oauth2-redirect.html
+        - https://rafambrito.github.io/
+        - https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html
+        - https://rafambrito.github.io/feedback-platform-core/
         - https://localhost/callback
       LogoutURLs:
+        - https://rafambrito.github.io/
+        - https://rafambrito.github.io/feedback-platform-core/
         - https://localhost/signout
       AllowedOAuthScopes: !If
         - IsDev
@@ -1024,6 +1040,12 @@ Outputs:
     Value: !GetAtt CognitoUserPool.Arn
   CognitoUserPoolClientId:
     Value: !Ref CognitoUserPoolClient
+  CognitoHostedUIDomain:
+    Value: !Sub https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com
+  CognitoOAuthAuthorizationUrl:
+    Value: !Sub https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize
+  CognitoOAuthTokenUrl:
+    Value: !Sub https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token
   CognitoDefaultAdminUsername:
     Value: !Ref DefaultAdminUsername
   CognitoJwtIssuerConfigured:

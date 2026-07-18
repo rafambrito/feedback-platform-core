@@ -21,7 +21,8 @@ tags:
   - name: Reports
     description: Consultas analiticas e relatorios
 security:
-  - CognitoBearerAuth: []
+  - CognitoOAuth2:
+      - openid
 paths:
   /feedback:
     post:
@@ -280,13 +281,16 @@ paths:
           $ref: '#/components/responses/InternalServerError'
 components:
   securitySchemes:
-    CognitoBearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+    CognitoOAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://feedback-platform-dev-022267198187.auth.us-east-2.amazoncognito.com/oauth2/authorize
+          tokenUrl: https://feedback-platform-dev-022267198187.auth.us-east-2.amazoncognito.com/oauth2/token
+          scopes:
+            openid: Escopo padrao para autenticacao via Cognito.
       description: |
-        Access token emitido pelo Amazon Cognito User Pool configurado no API Gateway.
-        Envie o cabecalho Authorization no formato Bearer <token>.
+        Fluxo OAuth2 Authorization Code via Amazon Cognito para uso do botao Authorize no Swagger UI.
   parameters:
     FeedbackId:
       name: id

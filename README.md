@@ -161,6 +161,23 @@ Os dados do usuário administrador podem ser personalizados utilizando os parâm
 - `DefaultAdminEmail`
 - `DefaultAdminPassword`
 
+Para uso do botão **Authorize** no Swagger UI (GitHub Pages), o Cognito foi configurado com OAuth2 Authorization Code Flow e os seguintes callbacks:
+
+- `https://rafambrito.github.io/oauth2-redirect.html`
+- `https://rafambrito.github.io/`
+- `https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html`
+- `https://rafambrito.github.io/feedback-platform-core/`
+
+Também foram habilitados os respectivos logout URLs:
+
+- `https://rafambrito.github.io/`
+- `https://rafambrito.github.io/feedback-platform-core/`
+
+Endpoints OAuth2 do Cognito (Hosted UI):
+
+- `https://feedback-platform-dev-022267198187.auth.us-east-2.amazoncognito.com/oauth2/authorize`
+- `https://feedback-platform-dev-022267198187.auth.us-east-2.amazoncognito.com/oauth2/token`
+
 ---
 
 # 🧪 Testando a API
