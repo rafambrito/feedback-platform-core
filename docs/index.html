@@ -22,7 +22,7 @@ href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"/>
 
 window.onload = () => {
 
-SwaggerUIBundle({
+const ui = SwaggerUIBundle({
 
 url: "./openapi.yaml",
 
@@ -33,6 +33,16 @@ deepLinking: true,
 displayRequestDuration: true,
 
 persistAuthorization: true
+
+});
+
+ui.initOAuth({
+
+clientId: "349npdqa6ol9849tpf7fpdo3qb",
+
+appName: "Feedback Platform",
+
+usePkceWithAuthorizationCodeGrant: true
 
 });
 
