@@ -956,6 +956,18 @@ Resources:
           - !Ref PrdJwtIssuer
       Description: Issuer JWT esperado para validacao de tokens
 
+  FeedbackTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Sub feedback-platform-feedback-${StageName}
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+
   CollectorFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -964,6 +976,12 @@ Resources:
       FunctionName: !Sub feedback-collector-${StageName}
       CodeUri: .
       Handler: com.feedback.platform.lambda.CollectorLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          AWS_DYNAMODB_TABLE: !Ref FeedbackTable
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref FeedbackTable
       Events:
         CollectorPostFeedback:
           Type: Api
