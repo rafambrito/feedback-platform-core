@@ -175,8 +175,8 @@ Também foram habilitados os respectivos logout URLs:
 
 Endpoints OAuth2 do Cognito (Hosted UI):
 
-- `https://feedback-platform-dev-022267198187.auth.us-east-2.amazoncognito.com/oauth2/authorize`
-- `https://feedback-platform-dev-022267198187.auth.us-east-2.amazoncognito.com/oauth2/token`
+- `https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize`
+- `https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token`
 
 ---
 
