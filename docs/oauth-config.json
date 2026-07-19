@@ -1,0 +1,9 @@
+{
+  "stackName": "feedback-platform",
+  "region": "us-east-2",
+  "clientId": "452ib6e9f5ne4d51sjvttkftap",
+  "authorizationUrl": "https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize",
+  "tokenUrl": "https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token",
+  "oauth2RedirectUrl": "https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html",
+  "openapiUrl": "./openapi.yaml"
+}

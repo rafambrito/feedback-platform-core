@@ -81,32 +81,41 @@ oauthBridgeChannel.onmessage = function(event) {
 };
 
 window.onload = () => {
+fetch("./oauth-config.json", { cache: "no-store" })
+	.then(function(response) {
+		if (!response.ok) {
+			throw new Error("oauth-config.json not found");
+		}
+		return response.json();
+	})
+	.then(function(oauthConfig) {
+		var params = new URLSearchParams(window.location.search);
+		var resolvedClientId = params.get("client_id") || oauthConfig.clientId;
 
-const ui = SwaggerUIBundle({
+		if (!resolvedClientId) {
+			throw new Error("OAuth clientId is missing. Run scripts/sync-swagger-oauth.sh after deploy.");
+		}
 
-url: "./openapi.yaml",
+		var ui = SwaggerUIBundle({
+			url: oauthConfig.openapiUrl || "./openapi.yaml",
+			oauth2RedirectUrl: oauthConfig.oauth2RedirectUrl || "https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html",
+			dom_id: "#swagger-ui",
+			deepLinking: true,
+			displayRequestDuration: true,
+			persistAuthorization: true
+		});
 
-oauth2RedirectUrl: "https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html",
-
-dom_id: "#swagger-ui",
-
-deepLinking: true,
-
-displayRequestDuration: true,
-
-persistAuthorization: true
-
-});
-
-ui.initOAuth({
-
-clientId: "349npdqa6ol9849tpf7fpdo3qb",
-
-appName: "Feedback Platform",
-
-usePkceWithAuthorizationCodeGrant: true
-
-});
+		ui.initOAuth({
+			clientId: resolvedClientId,
+			appName: "Feedback Platform",
+			usePkceWithAuthorizationCodeGrant: true
+		});
+	})
+	.catch(function(error) {
+		var message = document.createElement("pre");
+		message.textContent = "Swagger OAuth configuration error: " + String(error);
+		document.body.appendChild(message);
+	});
 
 };
 

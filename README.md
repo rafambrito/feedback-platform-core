@@ -292,7 +292,7 @@ Deploy:
 ```bash
 sam deploy \
      --template-file .aws-sam/build/template.yaml \
-     --stack-name feedback-platform-core-dev \
+     --stack-name feedback-platform \
      --region us-east-2 \
      --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
      --resolve-s3 \
@@ -301,6 +301,9 @@ sam deploy \
      --parameter-overrides \
           StageName=dev \
           DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/us-east-2_uqihO61Nf
+
+# sincroniza client_id e URLs OAuth do Swagger com os Outputs reais da stack
+./scripts/sync-swagger-oauth.sh feedback-platform us-east-2
 ```
 
 Parâmetros recomendados:
