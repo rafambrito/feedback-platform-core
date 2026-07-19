@@ -4,6 +4,7 @@
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/domain/FeedbackRecord.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/dto/ProfessorReportResponseDTO.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/adapters/security/TokenValidator.java
+/home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/lambda/ReporterLambdaHandler.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/resource/TokenValidationExceptionHandler.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/adapters/observability/RequestCorrelationFilter.java
 /home/rafael/git/feedback-platform-core/feedback-reporter/src/main/java/com/feedback/platform/reporter/repository/dynamodb/DynamoDBFeedbackRepository.java

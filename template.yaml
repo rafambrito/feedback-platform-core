@@ -989,6 +989,9 @@ Resources:
     Properties:
       CodeUri: .
       Handler: com.feedback.platform.reporter.lambda.ReporterLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          AWS_DYNAMODB_TABLE: !Ref FeedbackTable
       Events:
         ReporterGetProfessor:
           Type: Api
