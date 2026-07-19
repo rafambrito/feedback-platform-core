@@ -204,9 +204,19 @@ Authorization: Bearer <ACCESS_TOKEN>
 
 ## 2. Criar um Feedback
 
+Resolva a URL atual da API a partir da stack ativa:
+
+```bash
+API_BASE_URL=$(aws cloudformation describe-stacks \
+     --stack-name feedback-platform \
+     --region us-east-2 \
+     --query "Stacks[0].Outputs[?OutputKey=='RestApiUrl'].OutputValue | [0]" \
+     --output text)
+```
+
 ```bash
 curl -X POST \
-'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/feedback' \
+"${API_BASE_URL}/feedback" \
 -H 'Authorization: Bearer <ACCESS_TOKEN>' \
 -H 'Content-Type: application/json' \
 -d '{
@@ -224,7 +234,7 @@ curl -X POST \
 
 ```bash
 curl \
-'https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev/reports/weekly?courseId=1TIA' \
+"${API_BASE_URL}/reports/weekly?courseId=1TIA" \
 -H 'Authorization: Bearer <ACCESS_TOKEN>'
 ```
 

@@ -11,7 +11,7 @@ info:
     - exemplos de payload para teste rapido
     - respostas de erro padronizadas para 4xx e 5xx
 servers:
-  - url: https://a40xikye61.execute-api.us-east-2.amazonaws.com/dev
+  - url: https://wg2n5b4tz7.execute-api.us-east-2.amazonaws.com/dev
     description: Ambiente dev publicado na AWS
 tags:
   - name: Feedback
