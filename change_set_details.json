@@ -1,0 +1,347 @@
+{
+    "Changes": [
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ApiGatewayRestApiDeploymente2496ae630",
+                "ResourceType": "AWS::ApiGateway::Deployment",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ApiGatewayRestApiStage",
+                "ResourceType": "AWS::ApiGateway::Stage",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ApiGatewayRestApi",
+                "ResourceType": "AWS::ApiGateway::RestApi",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoAdminGroup",
+                "ResourceType": "AWS::Cognito::UserPoolGroup",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoIssuerParameter",
+                "ResourceType": "AWS::SSM::Parameter",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoSeedDefaultAdminUser",
+                "ResourceType": "Custom::CognitoSeedUser",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoSeedUserFunction",
+                "ResourceType": "AWS::Lambda::Function",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoSeedUserRole",
+                "ResourceType": "AWS::IAM::Role",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoUserPoolClient",
+                "ResourceType": "AWS::Cognito::UserPoolClient",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoUserPoolDomain",
+                "ResourceType": "AWS::Cognito::UserPoolDomain",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CognitoUserPool",
+                "ResourceType": "AWS::Cognito::UserPool",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CollectorFunctionCollectorGetFeedbackPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CollectorFunctionCollectorPostFeedbackPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CollectorFunctionRole",
+                "ResourceType": "AWS::IAM::Role",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "CollectorFunction",
+                "ResourceType": "AWS::Lambda::Function",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "FeedbackTable",
+                "ResourceType": "AWS::DynamoDB::Table",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "NotificationTable",
+                "ResourceType": "AWS::DynamoDB::Table",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "NotifierFunctionNotifierGetByIdPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "NotifierFunctionNotifierPostSimulatePermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "NotifierFunctionNotifierPostUrgentPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "NotifierFunctionRole",
+                "ResourceType": "AWS::IAM::Role",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "NotifierFunction",
+                "ResourceType": "AWS::Lambda::Function",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ReporterFunctionReporterGetCursoPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ReporterFunctionReporterGetProfessorPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ReporterFunctionReporterGetWeeklyPermissionStage",
+                "ResourceType": "AWS::Lambda::Permission",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ReporterFunctionRole",
+                "ResourceType": "AWS::IAM::Role",
+                "Scope": [],
+                "Details": []
+            }
+        },
+        {
+            "Type": "Resource",
+            "ResourceChange": {
+                "Action": "Add",
+                "LogicalResourceId": "ReporterFunction",
+                "ResourceType": "AWS::Lambda::Function",
+                "Scope": [],
+                "Details": []
+            }
+        }
+    ],
+    "ChangeSetName": "samcli-deploy1784425587",
+    "ChangeSetId": "arn:aws:cloudformation:us-east-2:022267198187:changeSet/samcli-deploy1784425587/8d9bb7ae-d4e0-4fef-bf17-ad31fd2312b3",
+    "StackId": "arn:aws:cloudformation:us-east-2:022267198187:stack/feedback-platform-core-dev/a9275320-8313-11f1-8933-0af5ef438825",
+    "StackName": "feedback-platform-core-dev",
+    "Description": "Created by SAM CLI at 2026-07-19T01:46:27.994363+00:00 UTC",
+    "Parameters": [
+        {
+            "ParameterKey": "SesToEmailOverride",
+            "ParameterValue": "rafael.mendonca.brito@gmail.com"
+        },
+        {
+            "ParameterKey": "SesFromEmail",
+            "ParameterValue": "rafael.mendonca.brito@gmail.com"
+        },
+        {
+            "ParameterKey": "DevAccessTokenValidityMinutes",
+            "ParameterValue": "60"
+        },
+        {
+            "ParameterKey": "DevIdTokenValidityMinutes",
+            "ParameterValue": "60"
+        },
+        {
+            "ParameterKey": "DevRefreshTokenValidityDays",
+            "ParameterValue": "30"
+        },
+        {
+            "ParameterKey": "StageName",
+            "ParameterValue": "dev"
+        },
+        {
+            "ParameterKey": "DefaultAdminUsername",
+            "ParameterValue": "admin@admin.com"
+        },
+        {
+            "ParameterKey": "DevOAuthScopes",
+            "ParameterValue": "openid,email,profile"
+        },
+        {
+            "ParameterKey": "DefaultAdminEmail",
+            "ParameterValue": "admin@admin.com"
+        },
+        {
+            "ParameterKey": "DefaultAdminPassword",
+            "ParameterValue": "****"
+        },
+        {
+            "ParameterKey": "DevJwtIssuer",
+            "ParameterValue": "https://cognito-idp.us-east-2.amazonaws.com/us-east-2_uqihO61Nf"
+        }
+    ],
+    "CreationTime": "2026-07-19T01:46:29.197000+00:00",
+    "ExecutionStatus": "UNAVAILABLE",
+    "Status": "FAILED",
+    "StatusReason": "The following hook(s)/validation failed: [AWS::EarlyValidation::ResourceExistenceCheck]. To troubleshoot Early Validation errors, use the DescribeEvents API for detailed failure information.",
+    "NotificationARNs": [],
+    "RollbackConfiguration": {},
+    "Capabilities": [
+        "CAPABILITY_IAM",
+        "CAPABILITY_NAMED_IAM"
+    ],
+    "Tags": null,
+    "ParentChangeSetId": null,
+    "IncludeNestedStacks": false,
+    "RootChangeSetId": null,
+    "OnStackFailure": null,
+    "ImportExistingResources": null,
+    "StackDriftStatus": null,
+    "DeploymentMode": null,
+    "DeploymentConfig": {
+        "Mode": "STANDARD",
+        "DisableRollback": false
+    }
+}

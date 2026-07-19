@@ -7,100 +7,64 @@ Parameters:
     Default: dev
     AllowedValues:
     - dev
-    - hml
-    - prd
-  DevJwtIssuer:
-    Type: String
-    Default: https://cognito-idp.us-east-1.amazonaws.com/dev-user-pool-id
-    Description: Issuer JWT esperado no ambiente dev
-  HmlJwtIssuer:
-    Type: String
-    Default: https://cognito-idp.us-east-1.amazonaws.com/hml-user-pool-id
-    Description: Issuer JWT esperado no ambiente hml
-  PrdJwtIssuer:
-    Type: String
-    Default: https://cognito-idp.us-east-1.amazonaws.com/prd-user-pool-id
-    Description: Issuer JWT esperado no ambiente prd
   DevOAuthScopes:
     Type: CommaDelimitedList
     Default: openid,email,profile
     Description: Escopos OAuth permitidos para dev
-  HmlOAuthScopes:
-    Type: CommaDelimitedList
-    Default: openid,email,profile
-    Description: Escopos OAuth permitidos para hml
-  PrdOAuthScopes:
-    Type: CommaDelimitedList
-    Default: openid,email,profile
-    Description: Escopos OAuth permitidos para prd
   DevAccessTokenValidityMinutes:
     Type: Number
     Default: 60
     MinValue: 5
     MaxValue: 1440
     Description: Validade do Access Token (minutos) em dev
-  HmlAccessTokenValidityMinutes:
-    Type: Number
-    Default: 30
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do Access Token (minutos) em hml
-  PrdAccessTokenValidityMinutes:
-    Type: Number
-    Default: 15
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do Access Token (minutos) em prd
   DevIdTokenValidityMinutes:
     Type: Number
     Default: 60
     MinValue: 5
     MaxValue: 1440
     Description: Validade do ID Token (minutos) em dev
-  HmlIdTokenValidityMinutes:
-    Type: Number
-    Default: 30
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do ID Token (minutos) em hml
-  PrdIdTokenValidityMinutes:
-    Type: Number
-    Default: 15
-    MinValue: 5
-    MaxValue: 1440
-    Description: Validade do ID Token (minutos) em prd
   DevRefreshTokenValidityDays:
     Type: Number
     Default: 30
     MinValue: 1
     MaxValue: 3650
     Description: Validade do Refresh Token (dias) em dev
-  HmlRefreshTokenValidityDays:
-    Type: Number
-    Default: 15
-    MinValue: 1
-    MaxValue: 3650
-    Description: Validade do Refresh Token (dias) em hml
-  PrdRefreshTokenValidityDays:
-    Type: Number
-    Default: 7
-    MinValue: 1
-    MaxValue: 3650
-    Description: Validade do Refresh Token (dias) em prd
+  DefaultAdminUsername:
+    Type: String
+    Default: admin@admin.com
+    Description: Usuario padrao criado no Cognito para testes manuais da API
+  DefaultAdminEmail:
+    Type: String
+    Default: admin@admin.com
+    Description: Email do usuario padrao criado no Cognito
+  DefaultAdminPassword:
+    Type: String
+    NoEcho: true
+    Default: Fiap2026Brito
+    Description: Senha permanente do usuario padrao criado no Cognito
+  SesFromEmail:
+    Type: String
+    Default: rafael.mendonca.brito@gmail.com
+    Description: Email remetente usado pelo SES no notifier (deve ser identidade verificada
+      no SES)
+  SesToEmailOverride:
+    Type: String
+    Default: rafael.mendonca.brito@gmail.com
+    Description: Opcional. Se preenchido, direciona todos os envios para este email
+      (util para SES sandbox)
 Conditions:
   IsDev:
     Fn::Equals:
     - Ref: StageName
     - dev
-  IsHml:
-    Fn::Equals:
-    - Ref: StageName
-    - hml
 Globals:
   Function:
     Runtime: java21
     MemorySize: 1024
     Timeout: 30
+    Environment:
+      Variables:
+        SECURITY_INTERCEPTOR_ENABLED: 'false'
 Resources:
   ApiGatewayRestApi:
     Type: AWS::Serverless::Api
@@ -109,7 +73,25 @@ Resources:
         Fn::Sub: feedback-platform-api-${StageName}
       StageName:
         Ref: StageName
+      Cors:
+        AllowOrigin: '''https://rafambrito.github.io'''
+        AllowMethods: '''GET,POST,PUT,DELETE,OPTIONS'''
+        AllowHeaders: '''Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'''
+      GatewayResponses:
+        DEFAULT_4XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: '''https://rafambrito.github.io'''
+              Access-Control-Allow-Headers: '''Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'''
+              Access-Control-Allow-Methods: '''GET,POST,PUT,DELETE,OPTIONS'''
+        DEFAULT_5XX:
+          ResponseParameters:
+            Headers:
+              Access-Control-Allow-Origin: '''https://rafambrito.github.io'''
+              Access-Control-Allow-Headers: '''Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token'''
+              Access-Control-Allow-Methods: '''GET,POST,PUT,DELETE,OPTIONS'''
       OpenApiVersion: 3.0.3
+      MergeDefinitions: true
       DefinitionBody:
         openapi: 3.0.3
         info:
@@ -130,9 +112,6 @@ Resources:
             - respostas de erro padronizadas para 4xx e 5xx
 
             '
-        servers:
-        - url: https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev
-          description: Ambiente dev publicado na AWS
         tags:
         - name: Feedback
           description: Coleta e consulta de feedbacks
@@ -141,7 +120,8 @@ Resources:
         - name: Reports
           description: Consultas analiticas e relatorios
         security:
-        - CognitoBearerAuth: []
+        - CognitoOAuth2:
+          - openid
         paths:
           /feedback:
             post:
@@ -405,14 +385,18 @@ Resources:
                   $ref: '#/components/responses/InternalServerError'
         components:
           securitySchemes:
-            CognitoBearerAuth:
-              type: http
-              scheme: bearer
-              bearerFormat: JWT
-              description: 'Access token emitido pelo Amazon Cognito User Pool configurado
-                no API Gateway.
-
-                Envie o cabecalho Authorization no formato Bearer <token>.
+            CognitoOAuth2:
+              type: oauth2
+              flows:
+                authorizationCode:
+                  authorizationUrl:
+                    Fn::Sub: https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize
+                  tokenUrl:
+                    Fn::Sub: https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token
+                  scopes:
+                    openid: Escopo padrao para autenticacao via Cognito.
+              description: 'Fluxo OAuth2 Authorization Code via Amazon Cognito para
+                uso do botao Authorize no Swagger UI.
 
                 '
           parameters:
@@ -695,6 +679,7 @@ Resources:
             validateRequestParameters: false
       Auth:
         DefaultAuthorizer: CognitoUserPoolAuthorizer
+        AddDefaultAuthorizerToCorsPreflight: false
         Authorizers:
           CognitoUserPoolAuthorizer:
             UserPoolArn:
@@ -718,6 +703,13 @@ Resources:
           RequireNumbers: true
           RequireSymbols: false
           RequireUppercase: true
+  CognitoUserPoolDomain:
+    Type: AWS::Cognito::UserPoolDomain
+    Properties:
+      Domain:
+        Fn::Sub: feedback-platform-${StageName}-${AWS::AccountId}-${AWS::Region}
+      UserPoolId:
+        Ref: CognitoUserPool
   CognitoAdminGroup:
     Type: AWS::Cognito::UserPoolGroup
     Properties:
@@ -741,60 +733,29 @@ Resources:
       AllowedOAuthFlows:
       - code
       CallbackURLs:
+      - https://rafambrito.github.io/oauth2-redirect.html
+      - https://rafambrito.github.io/
+      - https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html
+      - https://rafambrito.github.io/feedback-platform-core/
       - https://localhost/callback
       LogoutURLs:
+      - https://rafambrito.github.io/
+      - https://rafambrito.github.io/feedback-platform-core/
       - https://localhost/signout
       AllowedOAuthScopes:
-        Fn::If:
-        - IsDev
-        - Ref: DevOAuthScopes
-        - Fn::If:
-          - IsHml
-          - Ref: HmlOAuthScopes
-          - Ref: PrdOAuthScopes
+        Ref: DevOAuthScopes
       SupportedIdentityProviders:
       - COGNITO
       AccessTokenValidity:
-        Fn::If:
-        - IsDev
-        - Ref: DevAccessTokenValidityMinutes
-        - Fn::If:
-          - IsHml
-          - Ref: HmlAccessTokenValidityMinutes
-          - Ref: PrdAccessTokenValidityMinutes
+        Ref: DevAccessTokenValidityMinutes
       IdTokenValidity:
-        Fn::If:
-        - IsDev
-        - Ref: DevIdTokenValidityMinutes
-        - Fn::If:
-          - IsHml
-          - Ref: HmlIdTokenValidityMinutes
-          - Ref: PrdIdTokenValidityMinutes
+        Ref: DevIdTokenValidityMinutes
       RefreshTokenValidity:
-        Fn::If:
-        - IsDev
-        - Ref: DevRefreshTokenValidityDays
-        - Fn::If:
-          - IsHml
-          - Ref: HmlRefreshTokenValidityDays
-          - Ref: PrdRefreshTokenValidityDays
+        Ref: DevRefreshTokenValidityDays
       TokenValidityUnits:
         AccessToken: minutes
         IdToken: minutes
         RefreshToken: days
-  CognitoDefaultAdminUser:
-    Type: AWS::Cognito::UserPoolUser
-    Properties:
-      UserPoolId:
-        Ref: CognitoUserPool
-      Username: admin
-      MessageAction: SUPPRESS
-      DesiredDeliveryMediums: []
-      UserAttributes:
-      - Name: email
-        Value: admin@feedback-platform.local
-      - Name: email_verified
-        Value: 'true'
   CognitoSeedUserRole:
     Type: AWS::IAM::Role
     Properties:
@@ -834,45 +795,52 @@ Resources:
         - CognitoSeedUserRole
         - Arn
       Code:
-        ZipFile: "import json\nimport urllib3\nimport boto3\n\nhttp = urllib3.PoolManager()\n\
-          cognito = boto3.client(\"cognito-idp\")\n\ndef send(event, context, status,\
-          \ data, reason=None):\n    body = {\n        \"Status\": status,\n     \
-          \   \"Reason\": reason or f\"See details in CloudWatch Log Stream: {context.log_stream_name}\"\
-          ,\n        \"PhysicalResourceId\": event.get(\"PhysicalResourceId\") or\
-          \ f\"{event['ResourceProperties']['UserPoolId']}:{event['ResourceProperties']['Username']}\"\
+        ZipFile: "import json\nimport urllib.request\nimport boto3\n\ncognito = boto3.client(\"\
+          cognito-idp\")\n\ndef normalize_username(raw_username, email):\n    # User\
+          \ pools configured with email alias reject usernames in email format.\n\
+          \    candidate = raw_username or \"\"\n    if \"@\" in candidate:\n    \
+          \    source = email or candidate\n        candidate = source.replace(\"\
+          @\", \"_\").replace(\".\", \"_\")\n    return candidate\n\ndef send(event,\
+          \ context, status, data, reason=None):\n    body = {\n        \"Status\"\
+          : status,\n        \"Reason\": reason or f\"See details in CloudWatch Log\
+          \ Stream: {context.log_stream_name}\",\n        \"PhysicalResourceId\":\
+          \ event.get(\"PhysicalResourceId\") or f\"{event['ResourceProperties']['UserPoolId']}:{event['ResourceProperties']['Username']}\"\
           ,\n        \"StackId\": event[\"StackId\"],\n        \"RequestId\": event[\"\
           RequestId\"],\n        \"LogicalResourceId\": event[\"LogicalResourceId\"\
           ],\n        \"Data\": data,\n    }\n    encoded = json.dumps(body).encode(\"\
-          utf-8\")\n    http.request(\"PUT\", event[\"ResponseURL\"], body=encoded,\
-          \ headers={\"content-type\": \"\", \"content-length\": str(len(encoded))})\n\
+          utf-8\")\n    request = urllib.request.Request(\n        event[\"ResponseURL\"\
+          ],\n        data=encoded,\n        method=\"PUT\",\n        headers={\"\
+          content-type\": \"\", \"content-length\": str(len(encoded))},\n    )\n \
+          \   with urllib.request.urlopen(request) as response:\n        response.read()\n\
           \ndef ensure_user(props):\n    user_pool_id = props[\"UserPoolId\"]\n  \
-          \  username = props[\"Username\"]\n    password = props[\"Password\"]\n\
-          \    email = props[\"Email\"]\n    group_name = props[\"GroupName\"]\n\n\
-          \    try:\n        cognito.admin_get_user(UserPoolId=user_pool_id, Username=username)\n\
-          \    except cognito.exceptions.UserNotFoundException:\n        cognito.admin_create_user(\n\
-          \            UserPoolId=user_pool_id,\n            Username=username,\n\
-          \            MessageAction=\"SUPPRESS\",\n            UserAttributes=[\n\
-          \                {\"Name\": \"email\", \"Value\": email},\n            \
-          \    {\"Name\": \"email_verified\", \"Value\": \"true\"},\n            ],\n\
-          \        )\n\n    cognito.admin_update_user_attributes(\n        UserPoolId=user_pool_id,\n\
-          \        Username=username,\n        UserAttributes=[\n            {\"Name\"\
-          : \"email\", \"Value\": email},\n            {\"Name\": \"email_verified\"\
-          , \"Value\": \"true\"},\n        ],\n    )\n    cognito.admin_set_user_password(\n\
+          \  username = normalize_username(props.get(\"Username\"), props.get(\"Email\"\
+          ))\n    password = props[\"Password\"]\n    email = props[\"Email\"]\n \
+          \   group_name = props[\"GroupName\"]\n\n    try:\n        cognito.admin_get_user(UserPoolId=user_pool_id,\
+          \ Username=username)\n    except cognito.exceptions.UserNotFoundException:\n\
+          \        cognito.admin_create_user(\n            UserPoolId=user_pool_id,\n\
+          \            Username=username,\n            MessageAction=\"SUPPRESS\"\
+          ,\n            UserAttributes=[\n                {\"Name\": \"email\", \"\
+          Value\": email},\n                {\"Name\": \"email_verified\", \"Value\"\
+          : \"true\"},\n            ],\n        )\n\n    cognito.admin_update_user_attributes(\n\
+          \        UserPoolId=user_pool_id,\n        Username=username,\n        UserAttributes=[\n\
+          \            {\"Name\": \"email\", \"Value\": email},\n            {\"Name\"\
+          : \"email_verified\", \"Value\": \"true\"},\n        ],\n    )\n    cognito.admin_set_user_password(\n\
           \        UserPoolId=user_pool_id,\n        Username=username,\n        Password=password,\n\
           \        Permanent=True,\n    )\n    cognito.admin_add_user_to_group(\n\
           \        UserPoolId=user_pool_id,\n        Username=username,\n        GroupName=group_name,\n\
           \    )\n\ndef handler(event, context):\n    try:\n        request_type =\
           \ event[\"RequestType\"]\n        props = event[\"ResourceProperties\"]\n\
-          \        if request_type in (\"Create\", \"Update\"):\n            ensure_user(props)\n\
-          \            send(event, context, \"SUCCESS\", {\"Username\": props[\"Username\"\
-          ]})\n        else:\n            send(event, context, \"SUCCESS\", {\"Username\"\
-          : props[\"Username\"]})\n    except Exception as exc:\n        send(event,\
-          \ context, \"FAILED\", {}, str(exc))\n"
+          \        effective_username = normalize_username(props.get(\"Username\"\
+          ), props.get(\"Email\"))\n        if request_type in (\"Create\", \"Update\"\
+          ):\n            ensure_user(props)\n            send(event, context, \"\
+          SUCCESS\", {\"Username\": effective_username})\n        else:\n        \
+          \    send(event, context, \"SUCCESS\", {\"Username\": effective_username})\n\
+          \    except Exception as exc:\n        send(event, context, \"FAILED\",\
+          \ {}, str(exc))\n"
   CognitoSeedDefaultAdminUser:
     Type: Custom::CognitoSeedUser
     DependsOn:
     - CognitoAdminGroup
-    - CognitoDefaultAdminUser
     Properties:
       ServiceToken:
         Fn::GetAtt:
@@ -880,9 +848,12 @@ Resources:
         - Arn
       UserPoolId:
         Ref: CognitoUserPool
-      Username: admin
-      Password: fiap2026brito
-      Email: admin@feedback-platform.local
+      Username:
+        Ref: DefaultAdminUsername
+      Password:
+        Ref: DefaultAdminPassword
+      Email:
+        Ref: DefaultAdminEmail
       GroupName: ADMIN
   CognitoIssuerParameter:
     Type: AWS::SSM::Parameter
@@ -891,24 +862,44 @@ Resources:
         Fn::Sub: /feedback-platform/${StageName}/cognito/issuer
       Type: String
       Value:
-        Fn::If:
-        - IsDev
-        - Ref: DevJwtIssuer
-        - Fn::If:
-          - IsHml
-          - Ref: HmlJwtIssuer
-          - Ref: PrdJwtIssuer
+        Fn::Sub: https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
       Description: Issuer JWT esperado para validacao de tokens
+  FeedbackTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+  NotificationTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
   CollectorFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: makefile
       SamResourceId: CollectorFunction
     Properties:
-      FunctionName:
-        Fn::Sub: feedback-collector-${StageName}
       CodeUri: CollectorFunction
       Handler: com.feedback.platform.lambda.CollectorLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          AWS_DYNAMODB_TABLE:
+            Ref: FeedbackTable
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: FeedbackTable
       Events:
         CollectorPostFeedback:
           Type: Api
@@ -917,6 +908,10 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /feedback
             Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
         CollectorGetFeedback:
           Type: Api
           Properties:
@@ -924,16 +919,36 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /feedback/{id}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
   NotifierFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: makefile
       SamResourceId: NotifierFunction
     Properties:
-      FunctionName:
-        Fn::Sub: feedback-notifier-${StageName}
       CodeUri: NotifierFunction
       Handler: com.feedback.platform.notifier.lambda.NotifierLambdaHandler::handleRequest
+      Environment:
+        Variables:
+          AWS_DYNAMODB_NOTIFICATION_TABLE:
+            Ref: NotificationTable
+          AWS_SES_FROM_EMAIL:
+            Ref: SesFromEmail
+          AWS_SES_TO_EMAIL_OVERRIDE:
+            Ref: SesToEmailOverride
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: NotificationTable
+      - Statement:
+        - Effect: Allow
+          Action:
+          - ses:SendEmail
+          - ses:SendRawEmail
+          Resource: '*'
       Events:
         NotifierPostUrgent:
           Type: Api
@@ -942,6 +957,10 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /notifications/urgent
             Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
         NotifierGetById:
           Type: Api
           Properties:
@@ -949,6 +968,10 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /notifications/{id}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
         NotifierPostSimulate:
           Type: Api
           Properties:
@@ -956,14 +979,16 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /notifications/test/simulate
             Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
   ReporterFunction:
     Type: AWS::Serverless::Function
     Metadata:
       BuildMethod: makefile
       SamResourceId: ReporterFunction
     Properties:
-      FunctionName:
-        Fn::Sub: feedback-reporter-${StageName}
       CodeUri: ReporterFunction
       Handler: com.feedback.platform.reporter.lambda.ReporterLambdaHandler::handleRequest
       Events:
@@ -974,6 +999,10 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /reports/professor/{professorId}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
         ReporterGetCurso:
           Type: Api
           Properties:
@@ -981,6 +1010,10 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /reports/curso/{cursoId}
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
         ReporterGetWeekly:
           Type: Api
           Properties:
@@ -988,6 +1021,10 @@ Resources:
               Ref: ApiGatewayRestApi
             Path: /reports/weekly
             Method: get
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+              - openid
 Outputs:
   RestApiId:
     Value:
@@ -1003,17 +1040,21 @@ Outputs:
   CognitoUserPoolClientId:
     Value:
       Ref: CognitoUserPoolClient
+  CognitoHostedUIDomain:
+    Value:
+      Fn::Sub: https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com
+  CognitoOAuthAuthorizationUrl:
+    Value:
+      Fn::Sub: https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/authorize
+  CognitoOAuthTokenUrl:
+    Value:
+      Fn::Sub: https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token
   CognitoDefaultAdminUsername:
-    Value: admin
+    Value:
+      Ref: DefaultAdminUsername
   CognitoJwtIssuerConfigured:
     Value:
-      Fn::If:
-      - IsDev
-      - Ref: DevJwtIssuer
-      - Fn::If:
-        - IsHml
-        - Ref: HmlJwtIssuer
-        - Ref: PrdJwtIssuer
+      Fn::Sub: https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
   CognitoJwtIssuerFromPool:
     Value:
       Fn::Sub: https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
