@@ -894,6 +894,11 @@ Resources:
         - AttributeName: id
           KeyType: HASH
 
+  FeedbackNotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub feedback-notification-queue-${StageName}
+
   CollectorFunction:
     Type: AWS::Serverless::Function
     Metadata:
@@ -904,9 +909,12 @@ Resources:
       Environment:
         Variables:
           AWS_DYNAMODB_TABLE: !Ref FeedbackTable
+          AWS_NOTIFICATION_QUEUE_URL: !Ref FeedbackNotificationQueue
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref FeedbackTable
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt FeedbackNotificationQueue.QueueName
       Events:
         CollectorPostFeedback:
           Type: Api
@@ -944,6 +952,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref NotificationTable
+        - SQSPollerPolicy:
+            QueueName: !GetAtt FeedbackNotificationQueue.QueueName
         - Statement:
             - Effect: Allow
               Action:
@@ -951,36 +961,13 @@ Resources:
                 - ses:SendRawEmail
               Resource: "*"
       Events:
-        NotifierPostUrgent:
-          Type: Api
+        NotificationQueueEvent:
+          Type: SQS
           Properties:
-            RestApiId: !Ref ApiGatewayRestApi
-            Path: /notifications/urgent
-            Method: post
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
-              AuthorizationScopes:
-                - openid
-        NotifierGetById:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayRestApi
-            Path: /notifications/{id}
-            Method: get
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
-              AuthorizationScopes:
-                - openid
-        NotifierPostSimulate:
-          Type: Api
-          Properties:
-            RestApiId: !Ref ApiGatewayRestApi
-            Path: /notifications/test/simulate
-            Method: post
-            Auth:
-              Authorizer: CognitoUserPoolAuthorizer
-              AuthorizationScopes:
-                - openid
+            Queue: !GetAtt FeedbackNotificationQueue.Arn
+            BatchSize: 10
+            FunctionResponseTypes:
+              - ReportBatchItemFailures
 
   ReporterFunction:
     Type: AWS::Serverless::Function

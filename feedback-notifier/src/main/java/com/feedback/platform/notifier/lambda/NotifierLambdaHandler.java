@@ -2,14 +2,11 @@ package com.feedback.platform.notifier.lambda;
 
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.amazonaws.services.lambda.runtime.events.SQSEvent;
+import com.amazonaws.services.lambda.runtime.events.SQSBatchResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.feedback.platform.dto.UrgencyNotification;
-import com.feedback.platform.notifier.domain.Notificacao;
 import com.feedback.platform.notifier.repository.NotificationRepository;
 import com.feedback.platform.notifier.repository.NotificationSender;
 import com.feedback.platform.notifier.repository.dynamodb.DynamoDBNotificationRepository;
@@ -25,175 +22,52 @@ import software.amazon.awssdk.services.ses.SesClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
-public class NotifierLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+public class NotifierLambdaHandler implements RequestHandler<SQSEvent, SQSBatchResponse> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotifierLambdaHandler.class);
 
-    private static final Map<String, String> RESPONSE_HEADERS = Map.of(
-            "Content-Type", "application/json",
-            "Access-Control-Allow-Origin", "https://rafambrito.github.io",
-            "Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS",
-            "Access-Control-Allow-Headers", "Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token"
-    );
-
-    private final ObjectMapper objectMapper;
     private final NotificationService notificationService;
 
     public NotifierLambdaHandler() {
-        this.objectMapper = new ObjectMapper()
+        ObjectMapper objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-        this.notificationService = buildService(this.objectMapper);
+        this.notificationService = buildService(objectMapper);
     }
 
     NotifierLambdaHandler(NotificationService notificationService) {
-        this.objectMapper = new ObjectMapper()
-                .registerModule(new JavaTimeModule())
-                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
         this.notificationService = notificationService;
     }
 
     @Override
-    public APIGatewayProxyResponseEvent handleRequest(APIGatewayProxyRequestEvent event, Context context) {
+    public SQSBatchResponse handleRequest(SQSEvent event, Context context) {
         String requestId = context.getAwsRequestId();
-        String method = event.getHttpMethod() == null ? "" : event.getHttpMethod().toUpperCase();
-        String path = event.getPath() == null ? "" : event.getPath();
+        int records = event == null || event.getRecords() == null ? 0 : event.getRecords().size();
+        context.getLogger().log("[" + requestId + "] Processando lote SQS de notificacoes. records=" + records);
 
-        context.getLogger().log("[" + requestId + "] Processando notificacao. method=" + method + " path=" + path);
+        if (event == null || event.getRecords() == null || event.getRecords().isEmpty()) {
+            return new SQSBatchResponse(List.of());
+        }
 
-        try {
-            if ("OPTIONS".equals(method)) {
-                return emptyResponse(204);
+        List<SQSBatchResponse.BatchItemFailure> failures = new ArrayList<>();
+        for (SQSEvent.SQSMessage message : event.getRecords()) {
+            try {
+                String body = message.getBody();
+                if (body == null || body.isBlank()) {
+                    throw new IllegalArgumentException("Mensagem SQS vazia");
+                }
+
+                notificationService.simularRecebimento(body);
+            } catch (Exception exception) {
+                LOGGER.error("Falha ao processar mensagem SQS. messageId={}", message.getMessageId(), exception);
+                failures.add(new SQSBatchResponse.BatchItemFailure(message.getMessageId()));
             }
-
-            if ("POST".equals(method) && path.endsWith("/notifications/urgent")) {
-                return handleUrgentNotification(event);
-            }
-
-            if ("POST".equals(method) && path.endsWith("/notifications/test/simulate")) {
-                return handleSimulate(event);
-            }
-
-            if ("GET".equals(method) && path.contains("/notifications/")) {
-                return handleGetById(event);
-            }
-
-            return response(405, Map.of("message", "Metodo nao suportado"));
-        } catch (IllegalArgumentException e) {
-            context.getLogger().log("[" + requestId + "] Falha de validacao: " + e.getMessage());
-            return response(400, Map.of("error", e.getMessage()));
-        } catch (JsonProcessingException e) {
-            context.getLogger().log("[" + requestId + "] JSON invalido: " + e.getMessage());
-            return response(400, Map.of("error", "Payload JSON invalido"));
-        } catch (Exception e) {
-            context.getLogger().log("[" + requestId + "] Erro interno: " + e.getMessage());
-            return response(500, Map.of("error", "Erro ao processar notificacao"));
-        }
-    }
-
-    private APIGatewayProxyResponseEvent handleUrgentNotification(APIGatewayProxyRequestEvent event) throws JsonProcessingException {
-        String body = resolveBody(event);
-        if (body == null || body.isBlank()) {
-            throw new IllegalArgumentException("Payload invalido");
         }
 
-        UrgencyNotification urgencyNotification = objectMapper.readValue(body, UrgencyNotification.class);
-        Notificacao notificacao = notificationService.processarNotificacao(urgencyNotification);
-
-        return response(201, toResponsePayload(notificacao));
-    }
-
-    private APIGatewayProxyResponseEvent handleGetById(APIGatewayProxyRequestEvent event) {
-        String notificationId = extractNotificationId(event);
-        if (notificationId == null || notificationId.isBlank()) {
-            throw new IllegalArgumentException("Parametro id e obrigatorio");
-        }
-
-        Notificacao notificacao = notificationService.buscarPorId(notificationId);
-        if (notificacao == null) {
-            return response(404, Map.of("message", "Notificacao nao encontrada"));
-        }
-
-        return response(200, toResponsePayload(notificacao));
-    }
-
-    private Map<String, Object> toResponsePayload(Notificacao notificacao) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("id", notificacao.id());
-        payload.put("feedbackId", notificacao.feedbackId());
-        payload.put("professorId", notificacao.professorId());
-        payload.put("status", notificacao.status() != null ? notificacao.status().name() : null);
-        payload.put("dataCriacao", notificacao.dataCriacao());
-        payload.put("dataEnvio", notificacao.dataEnvio());
-        return payload;
-    }
-
-    private APIGatewayProxyResponseEvent handleSimulate(APIGatewayProxyRequestEvent event) {
-        String body = resolveBody(event);
-        if (body == null || body.isBlank()) {
-            throw new IllegalArgumentException("Payload invalido");
-        }
-
-        notificationService.simularRecebimento(body);
-        return response(200, Map.of("message", "Simulacao processada com sucesso"));
-    }
-
-    private String extractNotificationId(APIGatewayProxyRequestEvent event) {
-        Map<String, String> pathParameters = event.getPathParameters();
-        if (pathParameters != null && pathParameters.containsKey("id")) {
-            return pathParameters.get("id");
-        }
-
-        String path = event.getPath();
-        if (path == null || path.isBlank()) {
-            return null;
-        }
-
-        int index = path.lastIndexOf('/');
-        if (index < 0 || index + 1 >= path.length()) {
-            return null;
-        }
-
-        return path.substring(index + 1);
-    }
-
-    private String resolveBody(APIGatewayProxyRequestEvent event) {
-        String body = event.getBody();
-        if (body == null || body.isBlank()) {
-            return body;
-        }
-
-        if (Boolean.TRUE.equals(event.getIsBase64Encoded())) {
-            return new String(Base64.getDecoder().decode(body), StandardCharsets.UTF_8);
-        }
-
-        return body;
-    }
-
-    private APIGatewayProxyResponseEvent response(int statusCode, Object payload) {
-        String body;
-        try {
-            body = objectMapper.writeValueAsString(payload);
-        } catch (JsonProcessingException e) {
-            body = "{\"message\":\"Erro ao serializar resposta\"}";
-        }
-
-        return new APIGatewayProxyResponseEvent()
-                .withStatusCode(statusCode)
-                .withHeaders(RESPONSE_HEADERS)
-                .withBody(body);
-    }
-
-    private APIGatewayProxyResponseEvent emptyResponse(int statusCode) {
-        return new APIGatewayProxyResponseEvent()
-                .withStatusCode(statusCode)
-                .withHeaders(RESPONSE_HEADERS)
-                .withBody("");
+        return new SQSBatchResponse(failures);
     }
 
     private NotificationService buildService(ObjectMapper mapper) {

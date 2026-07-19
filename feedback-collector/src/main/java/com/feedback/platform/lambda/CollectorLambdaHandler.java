@@ -8,14 +8,24 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.feedback.platform.domain.Criticidade;
+import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.lambda.dto.FeedbackRequestDTO;
 import com.feedback.platform.lambda.repository.LambdaFeedbackRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.SqsClientBuilder;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
 
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
@@ -35,6 +45,8 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
     private final ObjectMapper objectMapper;
     private final Validator validator;
     private final LambdaFeedbackRepository repository;
+    private final SqsClient sqsClient;
+    private final String notificationQueueUrl;
 
     public CollectorLambdaHandler() {
         this.objectMapper = new ObjectMapper()
@@ -44,9 +56,15 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         this.validator = factory.getValidator();
         this.repository = new LambdaFeedbackRepository();
+        this.sqsClient = buildSqsClient();
+        this.notificationQueueUrl = readEnv("AWS_NOTIFICATION_QUEUE_URL", "");
     }
 
     CollectorLambdaHandler(LambdaFeedbackRepository repository) {
+        this(repository, null, "");
+    }
+
+    CollectorLambdaHandler(LambdaFeedbackRepository repository, SqsClient sqsClient, String notificationQueueUrl) {
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -54,6 +72,8 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         this.validator = factory.getValidator();
         this.repository = repository;
+        this.sqsClient = sqsClient;
+        this.notificationQueueUrl = notificationQueueUrl == null ? "" : notificationQueueUrl;
     }
 
     @Override
@@ -93,7 +113,8 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
                 return response(400, details);
             }
 
-            repository.save(request, requestId);
+            LambdaFeedbackRepository.SavedFeedback feedback = repository.save(request, requestId);
+            publishToNotificationQueueIfUrgent(feedback, context, requestId);
             context.getLogger().log("[" + requestId + "] Feedback persistido com sucesso");
             return response(201, "Feedback recebido com sucesso");
 
@@ -188,6 +209,44 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         return jsonResponse(statusCode, Map.of("message", message));
     }
 
+    private void publishToNotificationQueueIfUrgent(LambdaFeedbackRepository.SavedFeedback feedback,
+                                                    Context context,
+                                                    String requestId) {
+        if (feedback.criticidade() != Criticidade.ALTA) {
+            return;
+        }
+
+        if (notificationQueueUrl.isBlank()) {
+            context.getLogger().log("[" + requestId + "] AWS_NOTIFICATION_QUEUE_URL ausente. Notificacao assincrona nao publicada.");
+            return;
+        }
+
+        if (sqsClient == null) {
+            context.getLogger().log("[" + requestId + "] Cliente SQS indisponivel. Notificacao assincrona nao publicada.");
+            return;
+        }
+
+        try {
+            UrgencyNotification payload = new UrgencyNotification(
+                    feedback.id(),
+                    feedback.alunoId(),
+                    feedback.professorId(),
+                    feedback.criticidade().name()
+            );
+
+            String body = objectMapper.writeValueAsString(payload);
+            SendMessageRequest sendMessageRequest = SendMessageRequest.builder()
+                    .queueUrl(notificationQueueUrl)
+                    .messageBody(body)
+                    .build();
+
+            sqsClient.sendMessage(sendMessageRequest);
+            context.getLogger().log("[" + requestId + "] Notificacao assincrona enviada para SQS. feedbackId=" + feedback.id());
+        } catch (Exception exception) {
+            context.getLogger().log("[" + requestId + "] Falha ao publicar notificacao no SQS: " + exception.getMessage());
+        }
+    }
+
     private APIGatewayProxyResponseEvent jsonResponse(int statusCode, Object payload) {
         String body;
         try {
@@ -207,5 +266,28 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
                 .withStatusCode(statusCode)
                 .withHeaders(RESPONSE_HEADERS)
                 .withBody("");
+    }
+
+    private SqsClient buildSqsClient() {
+        String region = readEnv("AWS_REGION", "us-east-1");
+        String endpointOverride = readEnv("AWS_SQS_ENDPOINT_OVERRIDE", "");
+
+        SqsClientBuilder builder = SqsClient.builder().region(Region.of(region));
+        if (!endpointOverride.isBlank()) {
+            builder.endpointOverride(URI.create(endpointOverride));
+            builder.credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create("test", "test")));
+            return builder.build();
+        }
+
+        builder.credentialsProvider(DefaultCredentialsProvider.create());
+        return builder.build();
+    }
+
+    private String readEnv(String key, String defaultValue) {
+        String value = System.getenv(key);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
+        }
+        return value;
     }
 }

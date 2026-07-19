@@ -21,6 +21,18 @@ import java.util.UUID;
 
 public class LambdaFeedbackRepository {
 
+    public record SavedFeedback(
+            String id,
+            String cursoId,
+            String alunoId,
+            String professorId,
+            Integer nota,
+            String comentario,
+            Criticidade criticidade,
+            Instant dataCriacao
+    ) {
+    }
+
     private final DynamoDbClient dynamoDbClient;
     private final String tableName;
 
@@ -29,12 +41,13 @@ public class LambdaFeedbackRepository {
         this.dynamoDbClient = buildClient();
     }
 
-    public void save(FeedbackRequestDTO request, String requestId) {
+    public SavedFeedback save(FeedbackRequestDTO request, String requestId) {
+        String feedbackId = UUID.randomUUID().toString();
         Instant dataCriacao = Instant.now();
         Criticidade criticidade = avaliarCriticidade(request.nota());
 
         Map<String, AttributeValue> item = new HashMap<>();
-        item.put("id", AttributeValue.builder().s(UUID.randomUUID().toString()).build());
+        item.put("id", AttributeValue.builder().s(feedbackId).build());
         item.put("cursoId", AttributeValue.builder().s(request.cursoId()).build());
         item.put("alunoId", AttributeValue.builder().s(request.alunoId()).build());
         item.put("professorId", AttributeValue.builder().s(request.professorId()).build());
@@ -50,6 +63,17 @@ public class LambdaFeedbackRepository {
                 .build();
 
         dynamoDbClient.putItem(putItemRequest);
+
+        return new SavedFeedback(
+            feedbackId,
+            request.cursoId(),
+            request.alunoId(),
+            request.professorId(),
+            request.nota(),
+            request.comentario(),
+            criticidade,
+            dataCriacao
+        );
     }
 
     public Map<String, AttributeValue> findById(String id) {

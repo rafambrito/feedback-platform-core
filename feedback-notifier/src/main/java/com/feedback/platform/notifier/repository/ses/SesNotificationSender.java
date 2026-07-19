@@ -15,12 +15,18 @@ import software.amazon.awssdk.services.ses.model.Destination;
 import software.amazon.awssdk.services.ses.model.Message;
 import software.amazon.awssdk.services.ses.model.SendEmailRequest;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 @ApplicationScoped
 public class SesNotificationSender implements NotificationSender {
 
         private static final Logger LOGGER = LoggerFactory.getLogger(SesNotificationSender.class);
+        private static final DateTimeFormatter EMAIL_DATE_FORMATTER = DateTimeFormatter
+                .ofPattern("dd/MM/yyyy HH:mm:ss")
+                .withZone(ZoneId.systemDefault());
 
     private final SesClient sesClient;
     private final String fromEmail;
@@ -47,6 +53,7 @@ public class SesNotificationSender implements NotificationSender {
     @Override
     public void enviar(Notificacao notificacao) {
                 String destinationEmail = toEmailOverride.isBlank() ? notificacao.email() : toEmailOverride;
+                String bodyWithFormattedDate = formatBodyWithDate(notificacao.corpo());
 
         SendEmailRequest request = SendEmailRequest.builder()
                 .source(fromEmail)
@@ -54,7 +61,7 @@ public class SesNotificationSender implements NotificationSender {
                 .message(Message.builder()
                         .subject(Content.builder().data(notificacao.assunto()).build())
                         .body(Body.builder()
-                                .text(Content.builder().data(notificacao.corpo()).build())
+                                .text(Content.builder().data(bodyWithFormattedDate).build())
                                 .build())
                         .build())
                 .build();
@@ -72,4 +79,14 @@ public class SesNotificationSender implements NotificationSender {
                         LOGGER.info("Email SES enviado para override {} (destino original={})", destinationEmail, notificacao.email());
                 }
     }
+
+        private String formatBodyWithDate(String body) {
+                String formattedDate = EMAIL_DATE_FORMATTER.format(Instant.now());
+
+                if (body.contains("- Data:")) {
+                        return body.replaceFirst("(?m)(- Data:\\s*).*$", "$1" + formattedDate);
+                }
+
+                return body + System.lineSeparator() + "- Data: " + formattedDate;
+        }
 }
