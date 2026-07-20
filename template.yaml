@@ -105,8 +105,6 @@ Resources:
         tags:
           - name: Feedback
             description: Coleta e consulta de feedbacks
-          - name: Notifications
-            description: Processamento e consulta de notificacoes
           - name: Reports
             description: Consultas analiticas e relatorios
         security:
@@ -289,13 +287,6 @@ Resources:
               description: Identificador unico do feedback.
               schema:
                 type: string
-            NotificationId:
-              name: id
-              in: path
-              required: true
-              description: Identificador unico da notificacao.
-              schema:
-                type: string
             ProfessorId:
               name: professorId
               in: path
@@ -319,14 +310,6 @@ Resources:
                     $ref: '#/components/schemas/MessageResponse'
                   example:
                     message: Payload de entrada é obrigatório
-            BadRequestError:
-              description: Requisicao invalida.
-              content:
-                application/json:
-                  schema:
-                    $ref: '#/components/schemas/ErrorMessageResponse'
-                  example:
-                    error: Payload inválido
             UnauthorizedError:
               description: Token ausente, invalido ou expirado.
               content:
@@ -421,46 +404,6 @@ Resources:
                 dataCriacao:
                   type: string
                   format: date-time
-            UrgencyNotification:
-              type: object
-              required:
-                - feedbackId
-                - alunoId
-                - professorId
-                - urgencia
-              properties:
-                feedbackId:
-                  type: string
-                alunoId:
-                  type: string
-                professorId:
-                  type: string
-                urgencia:
-                  type: string
-                  enum:
-                    - BAIXA
-                    - MEDIA
-                    - ALTA
-                    - CRITICA
-              additionalProperties: false
-            NotificationResponse:
-              type: object
-              properties:
-                id:
-                  type: string
-                feedbackId:
-                  type: string
-                professorId:
-                  type: string
-                status:
-                  type: string
-                dataCriacao:
-                  type: string
-                  format: date-time
-                dataEnvio:
-                  type: string
-                  format: date-time
-                  nullable: true
             FeedbackReportItem:
               type: object
               properties:
