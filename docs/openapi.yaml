@@ -11,7 +11,7 @@ info:
     - exemplos de payload para teste rapido
     - respostas de erro padronizadas para 4xx e 5xx
 servers:
-  - url: https://wg2n5b4tz7.execute-api.us-east-2.amazonaws.com/dev
+  - url: https://r2iu71nvl4.execute-api.us-east-2.amazonaws.com/dev
     description: Ambiente dev publicado na AWS
 tags:
   - name: Feedback
@@ -184,8 +184,8 @@ components:
       type: oauth2
       flows:
         authorizationCode:
-          authorizationUrl: https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize
-          tokenUrl: https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token
+          authorizationUrl: https://feedback-platform-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize
+          tokenUrl: https://feedback-platform-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token
           scopes:
             openid: Escopo padrao para autenticacao via Cognito.
       description: |

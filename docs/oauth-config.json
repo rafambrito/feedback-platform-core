@@ -1,10 +1,10 @@
 {
   "stackName": "feedback-platform",
   "region": "us-east-2",
-  "clientId": "452ib6e9f5ne4d51sjvttkftap",
-  "restApiUrl": "https://wg2n5b4tz7.execute-api.us-east-2.amazonaws.com/dev",
-  "authorizationUrl": "https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize",
-  "tokenUrl": "https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token",
+  "clientId": "6bmbvvg1ht8e5nef4shtlq2lke",
+  "restApiUrl": "https://r2iu71nvl4.execute-api.us-east-2.amazonaws.com/dev",
+  "authorizationUrl": "https://feedback-platform-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize",
+  "tokenUrl": "https://feedback-platform-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token",
   "oauth2RedirectUrl": "https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html",
   "openapiUrl": "./openapi.yaml"
 }
