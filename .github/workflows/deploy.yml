@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  pages: write
 
 jobs:
   deploy:
@@ -62,3 +63,26 @@ jobs:
               --output table || true
             exit $rc
           fi
+
+  publish-docs:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-2
+      - name: Sync Swagger OAuth config from deployed stack
+        run: bash scripts/sync-swagger-oauth.sh feedback-platform us-east-2
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+      - name: Upload docs artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

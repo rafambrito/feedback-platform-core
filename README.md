@@ -21,7 +21,15 @@ https://rafambrito.github.io/feedback-platform-core/
 
 ### API (Ambiente DEV)
 
-https://xy1fzhv8o3.execute-api.us-east-2.amazonaws.com/dev
+Resolva a URL atual a partir dos outputs da stack ativa:
+
+```bash
+aws cloudformation describe-stacks \
+     --stack-name feedback-platform \
+     --region us-east-2 \
+     --query "Stacks[0].Outputs[?OutputKey=='RestApiUrl'].OutputValue | [0]" \
+     --output text
+```
 
 ---
 
@@ -175,8 +183,14 @@ Também foram habilitados os respectivos logout URLs:
 
 Endpoints OAuth2 do Cognito (Hosted UI):
 
-- `https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/authorize`
-- `https://feedback-platform-dev-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token`
+- authorization endpoint: output `CognitoOAuthAuthorizationUrl`
+- token endpoint: output `CognitoOAuthTokenUrl`
+
+Para manter Swagger e OAuth sempre alinhados com a stack publicada, execute:
+
+```bash
+bash scripts/sync-swagger-oauth.sh feedback-platform us-east-2
+```
 
 ---
 

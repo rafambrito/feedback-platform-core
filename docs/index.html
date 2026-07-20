@@ -17,8 +17,78 @@ href="https://unpkg.com/swagger-ui-dist/swagger-ui.css"/>
 <div id="swagger-ui"></div>
 
 <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
 
 <script>
+
+function applyRuntimeOpenApiOverrides(spec, oauthConfig) {
+	if (!spec || !oauthConfig) {
+		return spec;
+	}
+
+	if (oauthConfig.restApiUrl && Array.isArray(spec.servers) && spec.servers.length > 0) {
+		spec.servers[0].url = oauthConfig.restApiUrl;
+	}
+
+	var schemes = spec.components && spec.components.securitySchemes;
+	if (!schemes) {
+		return spec;
+	}
+
+	Object.keys(schemes).forEach(function(key) {
+		var scheme = schemes[key];
+		var authorizationCode =
+			scheme && scheme.type === "oauth2" && scheme.flows && scheme.flows.authorizationCode;
+
+		if (!authorizationCode) {
+			return;
+		}
+
+		if (oauthConfig.authorizationUrl) {
+			authorizationCode.authorizationUrl = oauthConfig.authorizationUrl;
+		}
+
+		if (oauthConfig.tokenUrl) {
+			authorizationCode.tokenUrl = oauthConfig.tokenUrl;
+		}
+	});
+
+	return spec;
+}
+
+function buildSwaggerUiConfig(oauthConfig, openApiSpec) {
+	var config = {
+		oauth2RedirectUrl: oauthConfig.oauth2RedirectUrl || "https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html",
+		dom_id: "#swagger-ui",
+		deepLinking: true,
+		displayRequestDuration: true,
+		persistAuthorization: true
+	};
+
+	if (openApiSpec) {
+		config.spec = openApiSpec;
+	} else {
+		config.url = oauthConfig.openapiUrl || "./openapi.yaml";
+	}
+
+	return config;
+}
+
+function loadOpenApiSpec(openapiPath) {
+	return fetch(openapiPath, { cache: "no-store" })
+		.then(function(response) {
+			if (!response.ok) {
+				throw new Error("OpenAPI file not found");
+			}
+			return response.text();
+		})
+		.then(function(content) {
+			if (!window.jsyaml || typeof window.jsyaml.load !== "function") {
+				throw new Error("YAML parser is unavailable");
+			}
+			return window.jsyaml.load(content);
+		});
+}
 
 function processSwaggerOauthPayload(params) {
 	var oauth2 = window.swaggerUIRedirectOauth2;
@@ -91,25 +161,28 @@ fetch("./oauth-config.json", { cache: "no-store" })
 	.then(function(oauthConfig) {
 		var params = new URLSearchParams(window.location.search);
 		var resolvedClientId = params.get("client_id") || oauthConfig.clientId;
+		var openapiPath = oauthConfig.openapiUrl || "./openapi.yaml";
 
 		if (!resolvedClientId) {
 			throw new Error("OAuth clientId is missing. Run scripts/sync-swagger-oauth.sh after deploy.");
 		}
 
-		var ui = SwaggerUIBundle({
-			url: oauthConfig.openapiUrl || "./openapi.yaml",
-			oauth2RedirectUrl: oauthConfig.oauth2RedirectUrl || "https://rafambrito.github.io/feedback-platform-core/oauth2-redirect.html",
-			dom_id: "#swagger-ui",
-			deepLinking: true,
-			displayRequestDuration: true,
-			persistAuthorization: true
-		});
+		loadOpenApiSpec(openapiPath)
+			.then(function(spec) {
+				return applyRuntimeOpenApiOverrides(spec, oauthConfig);
+			})
+			.catch(function() {
+				return null;
+			})
+			.then(function(specOrNull) {
+				var ui = SwaggerUIBundle(buildSwaggerUiConfig(oauthConfig, specOrNull));
 
-		ui.initOAuth({
-			clientId: resolvedClientId,
-			appName: "Feedback Platform",
-			usePkceWithAuthorizationCodeGrant: true
-		});
+				ui.initOAuth({
+					clientId: resolvedClientId,
+					appName: "Feedback Platform",
+					usePkceWithAuthorizationCodeGrant: true
+				});
+			});
 	})
 	.catch(function(error) {
 		var message = document.createElement("pre");
