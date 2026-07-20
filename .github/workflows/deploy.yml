@@ -1,7 +1,7 @@
 name: Deploy Pipeline
 on:
   push:
-    branches: [ feature/migracao_aws_lambda ]
+    branches: [ main ]
 
 permissions:
   contents: read
