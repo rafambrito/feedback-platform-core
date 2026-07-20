@@ -51,9 +51,19 @@ Parameters:
     Type: String
     Default: rafael.mendonca.brito@gmail.com
     Description: Opcional. Se preenchido, direciona todos os envios para este email (util para SES sandbox)
+  ExistingNotificationQueueArn:
+    Type: String
+    Default: ""
+    Description: Opcional. ARN de uma fila SQS existente para notificacoes. Se informado, a pilha nao cria nova fila.
+  ExistingNotificationQueueUrl:
+    Type: String
+    Default: ""
+    Description: Opcional. URL da fila SQS existente usada pelo collector para publicar mensagens.
 
 Conditions:
   IsDev: !Equals [!Ref StageName, dev]
+  UseExistingNotificationQueue: !Not [!Equals [!Ref ExistingNotificationQueueArn, ""]]
+  CreateNotificationQueue: !Equals [!Ref ExistingNotificationQueueArn, ""]
 
 Globals:
   Function:
@@ -68,7 +78,7 @@ Resources:
   ApiGatewayRestApi:
     Type: AWS::Serverless::Api
     Properties:
-      Name: !Sub feedback-platform-api-${StageName}
+      Name: !Sub ${AWS::StackName}-api
       StageName: !Ref StageName
       Cors:
         AllowOrigin: "'https://rafambrito.github.io'"
@@ -512,7 +522,7 @@ Resources:
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
-      UserPoolName: !Sub feedback-platform-user-pool-${StageName}
+      UserPoolName: !Sub ${AWS::StackName}-user-pool
       AliasAttributes:
         - email
       AutoVerifiedAttributes:
@@ -529,7 +539,7 @@ Resources:
   CognitoUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
-      Domain: !Sub feedback-platform-${StageName}-${AWS::AccountId}-${AWS::Region}
+      Domain: !Sub ${AWS::StackName}-${AWS::AccountId}-${AWS::Region}
       UserPoolId: !Ref CognitoUserPool
 
   CognitoAdminGroup:
@@ -542,7 +552,7 @@ Resources:
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
     Properties:
-      ClientName: !Sub feedback-platform-client-${StageName}
+      ClientName: !Sub ${AWS::StackName}-client
       UserPoolId: !Ref CognitoUserPool
       GenerateSecret: false
       ExplicitAuthFlows:
@@ -711,7 +721,7 @@ Resources:
   CognitoIssuerParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub /feedback-platform/${StageName}/cognito/issuer
+      Name: !Sub /feedback-platform/${AWS::StackName}/cognito/issuer
       Type: String
       Value: !Sub https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}
       Description: Issuer JWT esperado para validacao de tokens
@@ -740,8 +750,9 @@ Resources:
 
   FeedbackNotificationQueue:
     Type: AWS::SQS::Queue
+    Condition: CreateNotificationQueue
     Properties:
-      QueueName: !Sub feedback-notification-queue-${StageName}
+      QueueName: !Sub ${AWS::StackName}-feedback-notification-queue
 
   CollectorFunction:
     Type: AWS::Serverless::Function
@@ -753,12 +764,15 @@ Resources:
       Environment:
         Variables:
           AWS_DYNAMODB_TABLE: !Ref FeedbackTable
-          AWS_NOTIFICATION_QUEUE_URL: !Ref FeedbackNotificationQueue
+          AWS_NOTIFICATION_QUEUE_URL: !If [CreateNotificationQueue, !Ref FeedbackNotificationQueue, !Ref ExistingNotificationQueueUrl]
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref FeedbackTable
-        - SQSSendMessagePolicy:
-            QueueName: !GetAtt FeedbackNotificationQueue.QueueName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sqs:SendMessage
+              Resource: !If [CreateNotificationQueue, !GetAtt FeedbackNotificationQueue.Arn, !Ref ExistingNotificationQueueArn]
       Events:
         CollectorPostFeedback:
           Type: Api
@@ -796,8 +810,14 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref NotificationTable
-        - SQSPollerPolicy:
-            QueueName: !GetAtt FeedbackNotificationQueue.QueueName
+        - Statement:
+            - Effect: Allow
+              Action:
+                - sqs:ReceiveMessage
+                - sqs:DeleteMessage
+                - sqs:GetQueueAttributes
+                - sqs:ChangeMessageVisibility
+              Resource: !If [CreateNotificationQueue, !GetAtt FeedbackNotificationQueue.Arn, !Ref ExistingNotificationQueueArn]
         - Statement:
             - Effect: Allow
               Action:
@@ -808,7 +828,7 @@ Resources:
         NotificationQueueEvent:
           Type: SQS
           Properties:
-            Queue: !GetAtt FeedbackNotificationQueue.Arn
+            Queue: !If [CreateNotificationQueue, !GetAtt FeedbackNotificationQueue.Arn, !Ref ExistingNotificationQueueArn]
             BatchSize: 10
             FunctionResponseTypes:
               - ReportBatchItemFailures
