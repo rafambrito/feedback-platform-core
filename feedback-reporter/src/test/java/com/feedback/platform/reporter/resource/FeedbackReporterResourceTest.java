@@ -1,6 +1,6 @@
 package com.feedback.platform.reporter.resource;
 
-import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
+import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
 import com.feedback.platform.reporter.service.FeedbackReportService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -24,7 +24,7 @@ class FeedbackReporterResourceTest {
 
     @Test
     void deveRetornarRelatorioSemanalComSucesso() {
-        WeeklyCourseReportResponseDTO response = new WeeklyCourseReportResponseDTO(
+        ReportSemanalResponseDTO response = new ReportSemanalResponseDTO(
                 "curso-123",
                 null,
                 1,
@@ -36,22 +36,22 @@ class FeedbackReporterResourceTest {
                 Instant.parse("2026-07-01T10:00:00Z")
         );
 
-        when(feedbackReportService.getWeeklyCourseReport("curso-123", null)).thenReturn(response);
+        when(feedbackReportService.getRelatorioSemanalCurso("curso-123", null)).thenReturn(response);
 
         given()
                 .when()
-                .get("/reports/weekly?courseId=curso-123")
+                .get("/reports/semanal?cursoId=curso-123")
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("courseId", equalTo("curso-123"))
+                .body("cursoId", equalTo("curso-123"))
                 .body("totalFeedbacks", equalTo(1))
-                .body("altaCount", equalTo(0));
+                .body("quantidadeAlta", equalTo(0));
     }
 
     @Test
     void deveRetornarRelatorioSemanalFiltradoPorProfessor() {
-        WeeklyCourseReportResponseDTO response = new WeeklyCourseReportResponseDTO(
+        ReportSemanalResponseDTO response = new ReportSemanalResponseDTO(
                 "curso-123",
                 "prof-1",
                 2,
@@ -63,34 +63,34 @@ class FeedbackReporterResourceTest {
                 Instant.parse("2026-07-01T10:00:00Z")
         );
 
-        when(feedbackReportService.getWeeklyCourseReport("curso-123", "prof-1")).thenReturn(response);
+        when(feedbackReportService.getRelatorioSemanalCurso("curso-123", "prof-1")).thenReturn(response);
 
         given()
                 .when()
-                .get("/reports/weekly?courseId=curso-123&professorId=prof-1")
+                .get("/reports/semanal?cursoId=curso-123&professorId=prof-1")
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("courseId", equalTo("curso-123"))
+                .body("cursoId", equalTo("curso-123"))
                 .body("professorId", equalTo("prof-1"));
     }
 
     @Test
-    void deveRetornarBadRequestQuandoCourseIdAusente() {
+    void deveRetornarBadRequestQuandoCursoIdAusente() {
         given()
                 .when()
-                .get("/reports/weekly")
+                .get("/reports/semanal")
                 .then()
                 .statusCode(400);
     }
 
     @Test
-    void deveRetornarBadRequestQuandoCourseIdVazio() {
+    void deveRetornarBadRequestQuandoCursoIdVazio() {
         given()
                 .when()
-                .get("/reports/weekly?courseId=")
+                .get("/reports/semanal?cursoId=")
                 .then()
                 .statusCode(400)
-                .body(equalTo("courseId é obrigatório"));
+                .body(equalTo("cursoId é obrigatório"));
     }
 }

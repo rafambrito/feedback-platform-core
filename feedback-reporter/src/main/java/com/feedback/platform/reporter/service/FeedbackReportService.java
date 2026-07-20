@@ -2,7 +2,7 @@ package com.feedback.platform.reporter.service;
 
 import com.feedback.platform.reporter.dto.CursoReportResponseDTO;
 import com.feedback.platform.reporter.dto.ProfessorReportResponseDTO;
-import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
+import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
 
 public interface FeedbackReportService {
 
@@ -10,5 +10,5 @@ public interface FeedbackReportService {
 
     CursoReportResponseDTO getCursoReport(String cursoId);
 
-    WeeklyCourseReportResponseDTO getWeeklyCourseReport(String courseId, String professorId);
+    ReportSemanalResponseDTO getRelatorioSemanalCurso(String cursoId, String professorId);
 }

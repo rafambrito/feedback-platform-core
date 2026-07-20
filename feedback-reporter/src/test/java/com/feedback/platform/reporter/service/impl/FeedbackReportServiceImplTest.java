@@ -1,7 +1,7 @@
 package com.feedback.platform.reporter.service.impl;
 
 import com.feedback.platform.reporter.domain.FeedbackRecord;
-import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
+import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
 import com.feedback.platform.reporter.repository.FeedbackRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -51,15 +51,15 @@ class FeedbackReportServiceImplTest {
 
             when(feedbackRepository.findByCursoId("curso-123")).thenReturn(List.of(recente, antigo));
 
-            WeeklyCourseReportResponseDTO response = feedbackReportService.getWeeklyCourseReport("curso-123", null);
+            ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
 
-            assertEquals("curso-123", response.courseId());
+            assertEquals("curso-123", response.cursoId());
         assertEquals(1, response.totalFeedbacks());
-            assertEquals(5.0, response.averageNota());
-            assertEquals(1, response.baixaCount());
-            assertEquals(0, response.mediaCount());
-            assertEquals(0, response.altaCount());
-            assertEquals(1L, response.feedbacksByProfessor().get("prof-1"));
+            assertEquals(5.0, response.mediaNota());
+            assertEquals(1, response.quantidadeBaixa());
+            assertEquals(0, response.quantidadeMedia());
+            assertEquals(0, response.quantidadeAlta());
+            assertEquals(1L, response.feedbacksPorProfessor().get("prof-1"));
     }
 
     @Test
@@ -78,21 +78,21 @@ class FeedbackReportServiceImplTest {
 
         when(feedbackRepository.findByCursoId("curso-123")).thenReturn(List.of(antigo));
 
-        WeeklyCourseReportResponseDTO response = feedbackReportService.getWeeklyCourseReport("curso-123", null);
+        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
 
         assertEquals(0, response.totalFeedbacks());
-        assertEquals(0.0, response.averageNota());
-        assertTrue(response.feedbacksByProfessor().isEmpty());
+        assertEquals(0.0, response.mediaNota());
+        assertTrue(response.feedbacksPorProfessor().isEmpty());
     }
 
     @Test
     void deveRetornarZeroQuandoNaoExistemFeedbacks() {
         when(feedbackRepository.findByCursoId("curso-123")).thenReturn(List.of());
 
-        WeeklyCourseReportResponseDTO response = feedbackReportService.getWeeklyCourseReport("curso-123", null);
+        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
 
         assertEquals(0, response.totalFeedbacks());
-        assertTrue(response.feedbacksByProfessor().isEmpty());
+        assertTrue(response.feedbacksPorProfessor().isEmpty());
     }
 
     @Test
@@ -103,14 +103,14 @@ class FeedbackReportServiceImplTest {
 
         when(feedbackRepository.findByCursoIdAndProfessorId("curso-123", "prof-1")).thenReturn(List.of(p1a, p1b));
 
-        WeeklyCourseReportResponseDTO response = feedbackReportService.getWeeklyCourseReport("curso-123", "prof-1");
+        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", "prof-1");
 
         assertEquals("prof-1", response.professorId());
         assertEquals(2, response.totalFeedbacks());
-        assertEquals(3.0, response.averageNota());
-        assertEquals(0, response.baixaCount());
-        assertEquals(1, response.mediaCount());
-        assertEquals(1, response.altaCount());
-        assertEquals(2L, response.feedbacksByProfessor().get("prof-1"));
+        assertEquals(3.0, response.mediaNota());
+        assertEquals(0, response.quantidadeBaixa());
+        assertEquals(1, response.quantidadeMedia());
+        assertEquals(1, response.quantidadeAlta());
+        assertEquals(2L, response.feedbacksPorProfessor().get("prof-1"));
     }
 }

@@ -1,6 +1,7 @@
 com/feedback/platform/reporter/lambda/ReporterLambdaHandler.class
 com/feedback/platform/reporter/adapters/observability/RequestCorrelationFilter.class
 com/feedback/platform/reporter/adapters/security/TokenValidationException.class
+com/feedback/platform/reporter/lambda/SemanalReportHandler.class
 com/feedback/platform/reporter/service/FeedbackReportService.class
 com/feedback/platform/reporter/dto/FeedbackReportItemDTO.class
 com/feedback/platform/reporter/dto/CursoReportResponseDTO.class
@@ -8,11 +9,12 @@ com/feedback/platform/reporter/config/DynamoDBConfig.class
 com/feedback/platform/reporter/adapters/security/TokenValidator.class
 com/feedback/platform/reporter/resource/TokenValidationExceptionHandler.class
 com/feedback/platform/reporter/adapters/security/SecurityInterceptor.class
+com/feedback/platform/reporter/service/semanal/RelatorioSemanalSchedulerService.class
 com/feedback/platform/reporter/domain/FeedbackRecord.class
 com/feedback/platform/reporter/resource/FeedbackReporterResource.class
 com/feedback/platform/reporter/adapters/security/UserContext.class
 com/feedback/platform/reporter/dto/ProfessorReportResponseDTO.class
 com/feedback/platform/reporter/repository/dynamodb/DynamoDBFeedbackRepository.class
-com/feedback/platform/reporter/dto/WeeklyCourseReportResponseDTO.class
 com/feedback/platform/reporter/repository/FeedbackRepository.class
+com/feedback/platform/reporter/dto/ReportSemanalResponseDTO.class
 com/feedback/platform/reporter/service/impl/FeedbackReportServiceImpl.class

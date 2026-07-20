@@ -51,6 +51,14 @@ Parameters:
     Type: String
     Default: rafael.mendonca.brito@gmail.com
     Description: Opcional. Se preenchido, direciona todos os envios para este email (util para SES sandbox)
+  WeeklyReportCourseId:
+    Type: String
+    Default: 1TIA
+    Description: Identificador do curso usado pela Lambda agendada de relatorio semanal.
+  WeeklyReportProfessorId:
+    Type: String
+    Default: ""
+    Description: Opcional. Identificador do professor para filtrar o relatorio semanal agendado.
   ExistingNotificationQueueArn:
     Type: String
     Default: ""
@@ -885,6 +893,38 @@ Resources:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
                 - openid
+
+  WeeklyReportFunction:
+    Type: AWS::Serverless::Function
+    Metadata:
+      BuildMethod: makefile
+    Properties:
+      CodeUri: .
+      Handler: com.feedback.platform.reporter.lambda.WeeklyReportHandler::handleRequest
+      Environment:
+        Variables:
+          AWS_DYNAMODB_TABLE: !Ref FeedbackTable
+          AWS_WEEKLY_REPORT_COURSE_ID: !Ref WeeklyReportCourseId
+          AWS_WEEKLY_REPORT_PROFESSOR_ID: !Ref WeeklyReportProfessorId
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:DescribeTable
+                - dynamodb:GetItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt FeedbackTable.Arn
+                - !Sub ${FeedbackTable.Arn}/index/*
+      Events:
+        WeeklyReportSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 8 ? * MON *)
+            Name: !Sub ${AWS::StackName}-weekly-report-schedule
+            Description: Dispara a geracao do relatorio semanal toda segunda-feira as 08:00 UTC.
+            Enabled: true
 
 Outputs:
   RestApiId:

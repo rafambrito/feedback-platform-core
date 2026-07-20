@@ -21,3 +21,11 @@ build-ReporterFunction:
 	cp feedback-reporter/target/quarkus-app/app/*.jar $(ARTIFACTS_DIR)/lib/
 	cp feedback-reporter/target/quarkus-app/lib/boot/*.jar $(ARTIFACTS_DIR)/lib/
 	cp feedback-reporter/target/quarkus-app/lib/main/*.jar $(ARTIFACTS_DIR)/lib/
+
+build-WeeklyReportFunction:
+	mvn -f pom.xml -pl feedback-reporter -am clean package -DskipTests
+	rm -rf $(ARTIFACTS_DIR)/*
+	mkdir -p $(ARTIFACTS_DIR)/lib
+	cp feedback-reporter/target/quarkus-app/app/*.jar $(ARTIFACTS_DIR)/lib/
+	cp feedback-reporter/target/quarkus-app/lib/boot/*.jar $(ARTIFACTS_DIR)/lib/
+	cp feedback-reporter/target/quarkus-app/lib/main/*.jar $(ARTIFACTS_DIR)/lib/

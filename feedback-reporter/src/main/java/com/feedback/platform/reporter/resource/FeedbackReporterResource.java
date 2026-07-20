@@ -2,7 +2,7 @@ package com.feedback.platform.reporter.resource;
 
 import com.feedback.platform.reporter.dto.CursoReportResponseDTO;
 import com.feedback.platform.reporter.dto.ProfessorReportResponseDTO;
-import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
+import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
 import com.feedback.platform.reporter.service.FeedbackReportService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
@@ -43,15 +43,15 @@ public class FeedbackReporterResource {
     }
 
     @GET
-    @Path("/weekly")
-    public Response getWeeklyCourseReport(@QueryParam("courseId") String courseId,
-                                          @QueryParam("professorId") String professorId) {
-        if (courseId == null || courseId.isBlank()) {
+    @Path("/semanal")
+    public Response getRelatorioSemanalCurso(@QueryParam("cursoId") String cursoId,
+                                             @QueryParam("professorId") String professorId) {
+        if (cursoId == null || cursoId.isBlank()) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("courseId é obrigatório").build();
+                    .entity("cursoId é obrigatório").build();
         }
 
-        WeeklyCourseReportResponseDTO response = feedbackReportService.getWeeklyCourseReport(courseId, professorId);
+        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso(cursoId, professorId);
 
         return Response.ok(response).build();
     }

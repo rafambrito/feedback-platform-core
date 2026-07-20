@@ -77,16 +77,16 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
                 return response(200, feedbackReportService.getCursoReport(cursoId));
             }
 
-            if (path.endsWith("/reports/weekly")) {
+            if (path.endsWith("/reports/semanal")) {
                 Map<String, String> query = event.getQueryStringParameters();
-                String courseId = query != null ? query.get("courseId") : null;
+                String cursoId = query != null ? query.get("cursoId") : null;
                 String professorId = query != null ? query.get("professorId") : null;
 
-                if (courseId == null || courseId.isBlank()) {
-                    return response(400, Map.of("message", "courseId e obrigatorio"));
+                if (cursoId == null || cursoId.isBlank()) {
+                    return response(400, Map.of("message", "cursoId e obrigatorio"));
                 }
 
-                return response(200, feedbackReportService.getWeeklyCourseReport(courseId, professorId));
+                return response(200, feedbackReportService.getRelatorioSemanalCurso(cursoId, professorId));
             }
 
             return response(404, Map.of("message", "Endpoint nao encontrado"));

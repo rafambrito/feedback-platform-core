@@ -4,7 +4,7 @@ import com.feedback.platform.reporter.domain.FeedbackRecord;
 import com.feedback.platform.reporter.dto.CursoReportResponseDTO;
 import com.feedback.platform.reporter.dto.FeedbackReportItemDTO;
 import com.feedback.platform.reporter.dto.ProfessorReportResponseDTO;
-import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
+import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
 import com.feedback.platform.reporter.repository.FeedbackRepository;
 import com.feedback.platform.reporter.service.FeedbackReportService;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -55,30 +55,30 @@ public class FeedbackReportServiceImpl implements FeedbackReportService {
     }
 
     @Override
-    public WeeklyCourseReportResponseDTO getWeeklyCourseReport(String courseId, String professorId) {
+    public ReportSemanalResponseDTO getRelatorioSemanalCurso(String cursoId, String professorId) {
         Instant cutoff = Instant.now().minus(7, ChronoUnit.DAYS);
 
         List<FeedbackRecord> source = (professorId == null || professorId.isBlank())
-                ? feedbackRepository.findByCursoId(courseId)
-                : feedbackRepository.findByCursoIdAndProfessorId(courseId, professorId);
+                ? feedbackRepository.findByCursoId(cursoId)
+                : feedbackRepository.findByCursoIdAndProfessorId(cursoId, professorId);
 
-        List<FeedbackRecord> weekly = source.stream()
+        List<FeedbackRecord> semanaAtual = source.stream()
                 .filter(feedback -> feedback.dataCriacao() != null)
                 .filter(feedback -> !feedback.dataCriacao().isBefore(cutoff))
                 .toList();
 
-        long baixaCount = weekly.stream().filter(f -> "BAIXA".equalsIgnoreCase(f.criticidade())).count();
-        long mediaCount = weekly.stream().filter(f -> "MEDIA".equalsIgnoreCase(f.criticidade())).count();
-        long altaCount = weekly.stream().filter(f -> "ALTA".equalsIgnoreCase(f.criticidade())).count();
+        long baixaCount = semanaAtual.stream().filter(f -> "BAIXA".equalsIgnoreCase(f.criticidade())).count();
+        long mediaCount = semanaAtual.stream().filter(f -> "MEDIA".equalsIgnoreCase(f.criticidade())).count();
+        long altaCount = semanaAtual.stream().filter(f -> "ALTA".equalsIgnoreCase(f.criticidade())).count();
 
-        double averageNota = weekly.stream()
+        double averageNota = semanaAtual.stream()
                 .map(FeedbackRecord::nota)
                 .filter(nota -> nota != null)
                 .mapToInt(Integer::intValue)
                 .average()
                 .orElse(0.0);
 
-        Map<String, Long> feedbacksByProfessor = weekly.stream()
+        Map<String, Long> feedbacksByProfessor = semanaAtual.stream()
                 .collect(Collectors.groupingBy(FeedbackRecord::professorId, Collectors.counting()))
                 .entrySet().stream()
                 .sorted(Map.Entry.<String, Long>comparingByValue(Comparator.reverseOrder())
@@ -90,10 +90,10 @@ public class FeedbackReportServiceImpl implements FeedbackReportService {
                         LinkedHashMap::new
                 ));
 
-        return new WeeklyCourseReportResponseDTO(
-                courseId,
+        return new ReportSemanalResponseDTO(
+                cursoId,
                 professorId,
-                weekly.size(),
+                semanaAtual.size(),
                 averageNota,
                 baixaCount,
                 mediaCount,

@@ -1,6 +1,6 @@
 package com.feedback.platform.reporter.resource;
 
-import com.feedback.platform.reporter.dto.WeeklyCourseReportResponseDTO;
+import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
 import com.feedback.platform.reporter.service.FeedbackReportService;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
@@ -23,29 +23,29 @@ class FeedbackReporterResourceSecurityTest {
     FeedbackReportService feedbackReportService;
 
     @Test
-    void weekly_semToken_retorna401() {
+    void semanal_semToken_retorna401() {
         given()
                 .when()
-                .get("/reports/weekly?courseId=curso-123")
+                .get("/reports/semanal?cursoId=curso-123")
                 .then()
                 .statusCode(401)
                 .body("error_code", equalTo("TOKEN_INVALID"));
     }
 
     @Test
-    void weekly_tokenInvalido_retorna401() {
+    void semanal_tokenInvalido_retorna401() {
         given()
                 .header("Authorization", "Bearer INVALID_TOKEN")
                 .when()
-                .get("/reports/weekly?courseId=curso-123")
+                .get("/reports/semanal?cursoId=curso-123")
                 .then()
                 .statusCode(401)
                 .body("error_code", equalTo("TOKEN_INVALID"));
     }
 
     @Test
-    void weekly_tokenValido_retorna200() {
-        WeeklyCourseReportResponseDTO response = new WeeklyCourseReportResponseDTO(
+    void semanal_tokenValido_retorna200() {
+        ReportSemanalResponseDTO response = new ReportSemanalResponseDTO(
                 "curso-123",
                 null,
                 1,
@@ -56,15 +56,15 @@ class FeedbackReporterResourceSecurityTest {
                 Map.of("prof-1", 1L),
                 Instant.parse("2026-07-01T10:00:00Z")
         );
-        when(feedbackReportService.getWeeklyCourseReport("curso-123", null)).thenReturn(response);
+        when(feedbackReportService.getRelatorioSemanalCurso("curso-123", null)).thenReturn(response);
 
         given()
                 .header("Authorization", "Bearer " + SecurityEnabledTestProfile.TOKENS.generateValidToken())
                 .when()
-                .get("/reports/weekly?courseId=curso-123")
+            .get("/reports/semanal?cursoId=curso-123")
                 .then()
                 .statusCode(200)
                 .contentType(ContentType.JSON)
-                .body("courseId", equalTo("curso-123"));
+            .body("cursoId", equalTo("curso-123"));
     }
 }
