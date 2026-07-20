@@ -843,6 +843,17 @@ Resources:
       Environment:
         Variables:
           AWS_DYNAMODB_TABLE: !Ref FeedbackTable
+      Policies:
+        - Statement:
+            - Effect: Allow
+              Action:
+                - dynamodb:DescribeTable
+                - dynamodb:GetItem
+                - dynamodb:Query
+                - dynamodb:Scan
+              Resource:
+                - !GetAtt FeedbackTable.Arn
+                - !Sub ${FeedbackTable.Arn}/index/*
       Events:
         ReporterGetProfessor:
           Type: Api
