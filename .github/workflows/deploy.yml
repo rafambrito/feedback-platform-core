@@ -42,12 +42,22 @@ jobs:
           fi
       - name: Build SAM
         run: sam build
+      - name: Validate required deploy secrets
+        env:
+          COGNITO_DEFAULT_ADMIN_PASSWORD: ${{ secrets.COGNITO_DEFAULT_ADMIN_PASSWORD }}
+        run: |
+          if [[ -z "$COGNITO_DEFAULT_ADMIN_PASSWORD" ]]; then
+            echo "::error::Secret COGNITO_DEFAULT_ADMIN_PASSWORD is missing or empty. Configure it in repository secrets."
+            exit 1
+          fi
       - name: Deploy SAM
+        env:
+          COGNITO_DEFAULT_ADMIN_PASSWORD: ${{ secrets.COGNITO_DEFAULT_ADMIN_PASSWORD }}
         run: |
           set +e
           sam deploy --no-confirm-changeset \
             --stack-name feedback-platform \
-            --parameter-overrides StageName=dev DefaultAdminPassword=${{ secrets.COGNITO_DEFAULT_ADMIN_PASSWORD }} \
+            --parameter-overrides "StageName=dev" "DefaultAdminPassword=$COGNITO_DEFAULT_ADMIN_PASSWORD" \
             --capabilities CAPABILITY_IAM \
             --resolve-s3 \
             --region us-east-2
