@@ -47,7 +47,7 @@ jobs:
           set +e
           sam deploy --no-confirm-changeset \
             --stack-name feedback-platform \
-            --parameter-overrides StageName=dev \
+            --parameter-overrides StageName=dev DefaultAdminPassword=${{ secrets.COGNITO_DEFAULT_ADMIN_PASSWORD }} \
             --capabilities CAPABILITY_IAM \
             --resolve-s3 \
             --region us-east-2

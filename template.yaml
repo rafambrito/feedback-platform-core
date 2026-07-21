@@ -8,10 +8,6 @@ Parameters:
     Default: dev
     AllowedValues:
       - dev
-  DevOAuthScopes:
-    Type: CommaDelimitedList
-    Default: openid,email,profile
-    Description: Escopos OAuth permitidos para dev
   DevAccessTokenValidityMinutes:
     Type: Number
     Default: 60
@@ -41,8 +37,10 @@ Parameters:
   DefaultAdminPassword:
     Type: String
     NoEcho: true
-    Default: Fiap2026Brito
-    Description: Senha permanente do usuario padrao criado no Cognito
+    MinLength: 12
+    AllowedPattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$'
+    ConstraintDescription: Deve conter no minimo 12 caracteres com letras maiusculas, minusculas e numeros.
+    Description: Senha permanente do usuario padrao criado no Cognito (obrigatoria, sem valor default)
   SesFromEmail:
     Type: String
     Default: rafael.mendonca.brito@gmail.com
@@ -331,6 +329,9 @@ Resources:
                   tokenUrl: !Sub https://${CognitoUserPoolDomain}.auth.${AWS::Region}.amazoncognito.com/oauth2/token
                   scopes:
                     openid: Escopo padrao para autenticacao via Cognito.
+                    feedback-platform-api/feedback.write: Permite registrar avaliacao e feedback.
+                    feedback-platform-api/feedback.read: Permite consultar feedback por id.
+                    feedback-platform-api/report.read: Permite consultar relatorios.
               description: |
                 Fluxo OAuth2 Authorization Code via Amazon Cognito para uso do botao Authorize no Swagger UI.
           parameters:
@@ -598,6 +599,20 @@ Resources:
           RequireSymbols: false
           RequireUppercase: true
 
+  CognitoResourceServer:
+    Type: AWS::Cognito::UserPoolResourceServer
+    Properties:
+      UserPoolId: !Ref CognitoUserPool
+      Identifier: feedback-platform-api
+      Name: Feedback Platform API Resource Server
+      Scopes:
+        - ScopeName: feedback.write
+          ScopeDescription: Permite registrar avaliacao e feedback
+        - ScopeName: feedback.read
+          ScopeDescription: Permite consultar feedback por id
+        - ScopeName: report.read
+          ScopeDescription: Permite consultar relatorios
+
   CognitoUserPoolDomain:
     Type: AWS::Cognito::UserPoolDomain
     Properties:
@@ -613,6 +628,8 @@ Resources:
 
   CognitoUserPoolClient:
     Type: AWS::Cognito::UserPoolClient
+    DependsOn:
+      - CognitoResourceServer
     Properties:
       ClientName: !Sub ${AWS::StackName}-client
       UserPoolId: !Ref CognitoUserPool
@@ -634,7 +651,13 @@ Resources:
         - https://rafambrito.github.io/
         - https://rafambrito.github.io/feedback-platform-core/
         - https://localhost/signout
-      AllowedOAuthScopes: !Ref DevOAuthScopes
+      AllowedOAuthScopes:
+        - openid
+        - email
+        - profile
+        - feedback-platform-api/feedback.write
+        - feedback-platform-api/feedback.read
+        - feedback-platform-api/report.read
       SupportedIdentityProviders:
         - COGNITO
       AccessTokenValidity: !Ref DevAccessTokenValidityMinutes
@@ -845,7 +868,7 @@ Resources:
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
-                - openid
+                - feedback-platform-api/feedback.write
         CollectorPostFeedback:
           Type: Api
           Properties:
@@ -855,7 +878,7 @@ Resources:
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
-                - openid
+                - feedback-platform-api/feedback.write
         CollectorGetFeedback:
           Type: Api
           Properties:
@@ -865,7 +888,7 @@ Resources:
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
-                - openid
+                - feedback-platform-api/feedback.read
 
   NotifierFunction:
     Type: AWS::Serverless::Function
@@ -895,7 +918,7 @@ Resources:
               Action:
                 - ses:SendEmail
                 - ses:SendRawEmail
-              Resource: "*"
+              Resource: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesFromEmail}
       Events:
         NotificationQueueEvent:
           Type: SQS
@@ -936,7 +959,7 @@ Resources:
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
-                - openid
+                - feedback-platform-api/report.read
         ReporterGetCurso:
           Type: Api
           Properties:
@@ -946,7 +969,7 @@ Resources:
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
-                - openid
+                - feedback-platform-api/report.read
         ReporterGetWeekly:
           Type: Api
           Properties:
@@ -956,7 +979,7 @@ Resources:
             Auth:
               Authorizer: CognitoUserPoolAuthorizer
               AuthorizationScopes:
-                - openid
+                - feedback-platform-api/report.read
 
   WeeklyReportFunction:
     Type: AWS::Serverless::Function

@@ -224,6 +224,9 @@ components:
           tokenUrl: https://feedback-platform-022267198187-us-east-2.auth.us-east-2.amazoncognito.com/oauth2/token
           scopes:
             openid: Escopo padrao para autenticacao via Cognito.
+            feedback-platform-api/feedback.write: Permite registrar avaliacao e feedback.
+            feedback-platform-api/feedback.read: Permite consultar feedback por id.
+            feedback-platform-api/report.read: Permite consultar relatorios.
       description: |
         Fluxo OAuth2 Authorization Code via Amazon Cognito para uso do botao Authorize no Swagger UI.
   parameters:
