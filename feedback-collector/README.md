@@ -1,11 +1,11 @@
 # Feedback Collector Service
 
 📝 Microsservico responsavel pela coleta e processamento de feedbacks de cursos.
-⚡ Este servico adota arquitetura orientada a eventos para desacoplamento e escalabilidade.
+⚡ Este servico adota processamento assincrono para desacoplamento e escalabilidade.
 
 ## 🧰 Tecnologias
 - ☕ Java 21 e Quarkus 3.x
-- ☁️ AWS SDK v2 (DynamoDB e EventBridge)
+- ☁️ AWS SDK v2 (DynamoDB e SQS)
 - 🧪 Testcontainers (testes de integracao)
 
 ## ✅ Pre-requisitos

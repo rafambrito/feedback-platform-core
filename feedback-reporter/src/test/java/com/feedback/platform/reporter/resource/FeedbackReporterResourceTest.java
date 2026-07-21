@@ -48,6 +48,8 @@ class FeedbackReporterResourceTest {
                 .contentType(ContentType.JSON)
                 .body("cursoId", equalTo("curso-123"))
                 .body("totalFeedbacks", equalTo(1))
+                .body("feedbacksByDay.2026-07-01", equalTo(1))
+                .body("feedbacksByProfessor.prof-1", equalTo(1))
                 .body("quantidadePorDia.2026-07-01", equalTo(1))
                 .body("quantidadeAlta", equalTo(0));
     }

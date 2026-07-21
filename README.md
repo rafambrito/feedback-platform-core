@@ -9,7 +9,7 @@
 
 Feedback Platform é uma plataforma **serverless** para coleta, processamento e análise de feedbacks acadêmicos.
 
-A solução foi desenvolvida utilizando microsserviços, AWS Lambda e serviços gerenciados da AWS para oferecer escalabilidade, baixo acoplamento e processamento orientado a eventos.
+A solução foi desenvolvida utilizando microsserviços, AWS Lambda e serviços gerenciados da AWS para oferecer escalabilidade, baixo acoplamento e processamento assíncrono.
 
 ---
 
@@ -35,7 +35,7 @@ aws cloudformation describe-stacks \
 
 # 🏗️ Arquitetura
 
-A solução adota uma arquitetura **Serverless Event-Driven**.
+A solução adota uma arquitetura **Serverless com processamento assíncrono**.
 
 Fluxo simplificado:
 
@@ -49,17 +49,20 @@ Fluxo simplificado:
                          Amazon API Gateway
                               │
                ┌──────────────┼──────────────┐
-               ▼              ▼              ▼
-        Feedback Collector  Reporter     Notifier
-               │                             │
-               │                             ▼
-               │                         Amazon SQS
-               │                             │
-               ▼                             ▼
-          Amazon DynamoDB             Amazon SES
-               │
-               ▼
-        Amazon EventBridge
+                ▼              ▼
+           Feedback Collector  Reporter
+                │
+                ▼
+             Amazon DynamoDB
+                │
+                ▼
+               Amazon SQS
+                │
+                ▼
+           Feedback Notifier
+                │
+                ▼
+              Amazon SES
 ```
 
 ---
@@ -73,7 +76,7 @@ Responsável por:
 - receber feedbacks
 - validar dados
 - persistir informações no DynamoDB
-- publicar eventos críticos no EventBridge
+- publicar notificações críticas na fila SQS
 
 ---
 
@@ -105,7 +108,6 @@ Responsável por:
 - Amazon API Gateway
 - Amazon Cognito
 - Amazon DynamoDB
-- Amazon EventBridge
 - Amazon SQS
 - Amazon SES
 - Maven
@@ -343,7 +345,7 @@ DevJwtIssuer=https://cognito-idp.us-east-2.amazonaws.com/us-east-2_uqihO61Nf
 # ✅ Funcionalidades
 
 - Coleta de feedbacks
-- Processamento orientado a eventos
+- Processamento assíncrono via SQS
 - Persistência em DynamoDB
 - Notificações automáticas
 - Relatórios acadêmicos

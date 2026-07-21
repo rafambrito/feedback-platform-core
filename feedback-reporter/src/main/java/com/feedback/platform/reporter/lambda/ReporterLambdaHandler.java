@@ -21,6 +21,8 @@ import java.util.Optional;
 public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
     private static final String DEFAULT_ALLOWED_ORIGIN = "https://rafambrito.github.io";
+    private static final String WEEKLY_REPORT_PATH = "/reports/weekly";
+    private static final String WEEKLY_REPORT_LEGACY_PATH = "/reports/semanal";
 
     private final ObjectMapper objectMapper;
     private final FeedbackReportService feedbackReportService;
@@ -75,16 +77,16 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
                 return response(200, feedbackReportService.getCursoReport(cursoId));
             }
 
-            if (path.endsWith("/reports/semanal")) {
+            if (isWeeklyReportPath(path)) {
                 Map<String, String> query = event.getQueryStringParameters();
-                String cursoId = query != null ? query.get("cursoId") : null;
+                String courseId = query != null ? firstNonBlank(query.get("courseId"), query.get("cursoId")) : null;
                 String professorId = query != null ? query.get("professorId") : null;
 
-                if (cursoId == null || cursoId.isBlank()) {
-                    return response(400, Map.of("message", "cursoId e obrigatorio"));
+                if (courseId == null) {
+                    return response(400, Map.of("message", "courseId e obrigatorio"));
                 }
 
-                return response(200, feedbackReportService.getRelatorioSemanalCurso(cursoId, professorId));
+                return response(200, feedbackReportService.getRelatorioSemanalCurso(courseId, professorId));
             }
 
             return response(404, Map.of("message", "Endpoint nao encontrado"));
@@ -133,6 +135,29 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
         }
 
         return path.substring(index + 1);
+    }
+
+    private boolean isWeeklyReportPath(String path) {
+        if (path == null || path.isBlank()) {
+            return false;
+        }
+        return path.endsWith(WEEKLY_REPORT_PATH) || path.endsWith(WEEKLY_REPORT_LEGACY_PATH);
+    }
+
+    private String firstNonBlank(String first, String second) {
+        if (first != null) {
+            String normalized = first.trim();
+            if (!normalized.isBlank()) {
+                return normalized;
+            }
+        }
+
+        if (second != null) {
+            String normalized = second.trim();
+            return normalized.isBlank() ? null : normalized;
+        }
+
+        return null;
     }
 
     private APIGatewayProxyResponseEvent response(int statusCode, Object payload) {
