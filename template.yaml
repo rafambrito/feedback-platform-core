@@ -536,6 +536,11 @@ Resources:
                 altaCount:
                   type: integer
                   format: int64
+                feedbacksByDay:
+                  type: object
+                  additionalProperties:
+                    type: integer
+                    format: int64
                 feedbacksByProfessor:
                   type: object
                   additionalProperties:

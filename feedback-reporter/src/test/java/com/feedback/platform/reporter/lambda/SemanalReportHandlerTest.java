@@ -38,6 +38,7 @@ class SemanalReportHandlerTest {
                 0,
                 1,
                 1,
+            Map.of("2026-07-01", 2L),
                 Map.of("prof-1", 2L),
                 Instant.parse("2026-07-01T10:00:00Z")
         );

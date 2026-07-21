@@ -11,6 +11,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -71,6 +72,20 @@ public class FeedbackReportServiceImpl implements FeedbackReportService {
         long mediaCount = semanaAtual.stream().filter(f -> "MEDIA".equalsIgnoreCase(f.criticidade())).count();
         long altaCount = semanaAtual.stream().filter(f -> "ALTA".equalsIgnoreCase(f.criticidade())).count();
 
+        Map<String, Long> quantidadePorDia = semanaAtual.stream()
+                .collect(Collectors.groupingBy(
+                        feedback -> feedback.dataCriacao().atOffset(ZoneOffset.UTC).toLocalDate().toString(),
+                        Collectors.counting()
+                ))
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
+
         double averageNota = semanaAtual.stream()
                 .map(FeedbackRecord::nota)
                 .filter(nota -> nota != null)
@@ -98,6 +113,7 @@ public class FeedbackReportServiceImpl implements FeedbackReportService {
                 baixaCount,
                 mediaCount,
                 altaCount,
+                                quantidadePorDia,
                 feedbacksByProfessor,
                 Instant.now()
         );

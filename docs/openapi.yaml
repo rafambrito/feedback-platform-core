@@ -429,6 +429,12 @@ components:
         quantidadeAlta:
           type: integer
           format: int64
+        quantidadePorDia:
+          type: object
+          description: Quantidade de avaliacoes por dia no periodo semanal (UTC).
+          additionalProperties:
+            type: integer
+            format: int64
         feedbacksPorProfessor:
           type: object
           additionalProperties:

@@ -11,6 +11,7 @@ public record ReportSemanalResponseDTO(
         long quantidadeBaixa,
         long quantidadeMedia,
         long quantidadeAlta,
+        Map<String, Long> quantidadePorDia,
         Map<String, Long> feedbacksPorProfessor,
         Instant geradoEm
 ) {

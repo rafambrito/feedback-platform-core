@@ -53,6 +53,7 @@ class FeedbackReporterResourceSecurityTest {
                 1,
                 0,
                 0,
+            Map.of("2026-07-01", 1L),
                 Map.of("prof-1", 1L),
                 Instant.parse("2026-07-01T10:00:00Z")
         );

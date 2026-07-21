@@ -11,6 +11,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,6 +60,7 @@ class FeedbackReportServiceImplTest {
             assertEquals(1, response.quantidadeBaixa());
             assertEquals(0, response.quantidadeMedia());
             assertEquals(0, response.quantidadeAlta());
+            assertEquals(1L, response.quantidadePorDia().get(recente.dataCriacao().atOffset(java.time.ZoneOffset.UTC).toLocalDate().toString()));
             assertEquals(1L, response.feedbacksPorProfessor().get("prof-1"));
     }
 
@@ -82,6 +84,7 @@ class FeedbackReportServiceImplTest {
 
         assertEquals(0, response.totalFeedbacks());
         assertEquals(0.0, response.mediaNota());
+        assertTrue(response.quantidadePorDia().isEmpty());
         assertTrue(response.feedbacksPorProfessor().isEmpty());
     }
 
@@ -92,6 +95,7 @@ class FeedbackReportServiceImplTest {
         ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
 
         assertEquals(0, response.totalFeedbacks());
+        assertTrue(response.quantidadePorDia().isEmpty());
         assertTrue(response.feedbacksPorProfessor().isEmpty());
     }
 
@@ -111,6 +115,7 @@ class FeedbackReportServiceImplTest {
         assertEquals(0, response.quantidadeBaixa());
         assertEquals(1, response.quantidadeMedia());
         assertEquals(1, response.quantidadeAlta());
+        assertEquals(2, response.quantidadePorDia().values().stream().mapToLong(Long::longValue).sum());
         assertEquals(2L, response.feedbacksPorProfessor().get("prof-1"));
     }
 }
