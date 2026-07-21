@@ -129,6 +129,42 @@ Resources:
           - CognitoOAuth2:
               - openid
         paths:
+          /avaliacao:
+            post:
+              tags:
+                - Feedback
+              summary: Registrar avaliacao
+              description: Recebe uma avaliacao no formato simplificado do enunciado.
+              operationId: createAvaliacao
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: '#/components/schemas/AvaliacaoRequest'
+                    examples:
+                      default:
+                        value:
+                          descricao: Aula clara e objetiva.
+                          nota: 9
+              responses:
+                '201':
+                  description: Avaliacao recebida com sucesso.
+                  content:
+                    application/json:
+                      schema:
+                        $ref: '#/components/schemas/MessageResponse'
+                      example:
+                        message: Feedback recebido com sucesso
+                '400':
+                  $ref: '#/components/responses/BadRequestMessage'
+                '401':
+                  $ref: '#/components/responses/UnauthorizedError'
+                '403':
+                  $ref: '#/components/responses/ForbiddenError'
+                '500':
+                  $ref: '#/components/responses/InternalServerErrorMessage'
+              x-amazon-apigateway-request-validator: body-only
           /feedback:
             post:
               tags:
@@ -375,6 +411,19 @@ Resources:
                   example:
                     message: Erro interno ao processar feedback
           schemas:
+            AvaliacaoRequest:
+              type: object
+              required:
+                - descricao
+                - nota
+              properties:
+                descricao:
+                  type: string
+                nota:
+                  type: integer
+                  minimum: 0
+                  maximum: 10
+              additionalProperties: false
             FeedbackRequest:
               type: object
               required:
@@ -782,6 +831,16 @@ Resources:
                 - sqs:SendMessage
               Resource: !If [CreateNotificationQueue, !GetAtt FeedbackNotificationQueue.Arn, !Ref ExistingNotificationQueueArn]
       Events:
+        CollectorPostAvaliacao:
+          Type: Api
+          Properties:
+            RestApiId: !Ref ApiGatewayRestApi
+            Path: /avaliacao
+            Method: post
+            Auth:
+              Authorizer: CognitoUserPoolAuthorizer
+              AuthorizationScopes:
+                - openid
         CollectorPostFeedback:
           Type: Api
           Properties:

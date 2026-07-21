@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.feedback.platform.domain.Criticidade;
 import com.feedback.platform.dto.UrgencyNotification;
+import com.feedback.platform.lambda.dto.AvaliacaoRequestDTO;
 import com.feedback.platform.lambda.dto.FeedbackRequestDTO;
 import com.feedback.platform.lambda.repository.LambdaFeedbackRepository;
 import jakarta.validation.ConstraintViolation;
@@ -34,6 +35,11 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
+
+    private static final String AVALIACAO_PATH = "/avaliacao";
+    private static final String DEFAULT_CURSO_ID = "CURSO-GERAL";
+    private static final String DEFAULT_ALUNO_ID = "ALUNO-ANONIMO";
+    private static final String DEFAULT_PROFESSOR_ID = "PROF-GERAL";
 
     private static final Map<String, String> RESPONSE_HEADERS = Map.of(
             "Content-Type", "application/json",
@@ -102,7 +108,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
                 return response(400, "Payload de entrada é obrigatório");
             }
 
-            FeedbackRequestDTO request = objectMapper.readValue(body, FeedbackRequestDTO.class);
+            FeedbackRequestDTO request = parseRequest(event, body);
             Set<ConstraintViolation<FeedbackRequestDTO>> violations = validator.validate(request);
             if (!violations.isEmpty()) {
                 String details = violations.stream()
@@ -118,6 +124,9 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
             context.getLogger().log("[" + requestId + "] Feedback persistido com sucesso");
             return response(201, "Feedback recebido com sucesso");
 
+        } catch (IllegalArgumentException e) {
+            context.getLogger().log("[" + requestId + "] Falha de validação: " + e.getMessage());
+            return response(400, e.getMessage());
         } catch (JsonProcessingException e) {
             context.getLogger().log("[" + requestId + "] JSON inválido: " + e.getMessage());
             return response(400, "Payload JSON inválido");
@@ -125,6 +134,34 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
             context.getLogger().log("[" + requestId + "] Erro interno: " + e.getMessage());
             return response(500, "Erro interno ao processar feedback");
         }
+    }
+
+    private FeedbackRequestDTO parseRequest(APIGatewayProxyRequestEvent event, String body) throws JsonProcessingException {
+        String path = event.getPath() == null ? "" : event.getPath();
+        if (path.endsWith(AVALIACAO_PATH)) {
+            AvaliacaoRequestDTO avaliacaoRequest = objectMapper.readValue(body, AvaliacaoRequestDTO.class);
+            Set<ConstraintViolation<AvaliacaoRequestDTO>> violations = validator.validate(avaliacaoRequest);
+            if (!violations.isEmpty()) {
+                return throwValidationError(violations);
+            }
+
+            return new FeedbackRequestDTO(
+                    DEFAULT_CURSO_ID,
+                    DEFAULT_ALUNO_ID,
+                    DEFAULT_PROFESSOR_ID,
+                    avaliacaoRequest.nota(),
+                    avaliacaoRequest.descricao()
+            );
+        }
+
+        return objectMapper.readValue(body, FeedbackRequestDTO.class);
+    }
+
+    private <T> FeedbackRequestDTO throwValidationError(Set<ConstraintViolation<T>> violations) {
+        String details = violations.stream()
+                .map(v -> v.getPropertyPath() + " " + v.getMessage())
+                .collect(Collectors.joining("; "));
+        throw new IllegalArgumentException(details);
     }
 
     private APIGatewayProxyResponseEvent handleGetById(APIGatewayProxyRequestEvent event,

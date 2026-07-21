@@ -14,6 +14,8 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import java.util.Map;
+
 @Path("/reports")
 @Produces(MediaType.APPLICATION_JSON)
 @RequestScoped
@@ -46,13 +48,32 @@ public class FeedbackReporterResource {
     @Path("/semanal")
     public Response getRelatorioSemanalCurso(@QueryParam("cursoId") String cursoId,
                                              @QueryParam("professorId") String professorId) {
-        if (cursoId == null || cursoId.isBlank()) {
+        String normalizedCursoId = normalize(cursoId);
+        String normalizedProfessorId = normalize(professorId);
+
+        if (normalizedCursoId == null) {
             return Response.status(Response.Status.BAD_REQUEST)
-                    .entity("cursoId é obrigatório").build();
+                    .entity(Map.of("message", "cursoId é obrigatório"))
+                    .build();
         }
 
-        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso(cursoId, professorId);
+        try {
+            ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso(normalizedCursoId, normalizedProfessorId);
 
-        return Response.ok(response).build();
+            return Response.ok(response).build();
+        } catch (Exception exception) {
+            return Response.serverError()
+                    .entity(Map.of("message", "Erro ao gerar relatório semanal"))
+                    .build();
+        }
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+
+        String normalized = value.trim();
+        return normalized.isBlank() ? null : normalized;
     }
 }

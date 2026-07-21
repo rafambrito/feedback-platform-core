@@ -13,6 +13,7 @@ import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @QuarkusTest
@@ -81,7 +82,9 @@ class FeedbackReporterResourceTest {
                 .when()
                 .get("/reports/semanal")
                 .then()
-                .statusCode(400);
+                .statusCode(400)
+                .contentType(ContentType.JSON)
+                .body("message", equalTo("cursoId é obrigatório"));
     }
 
     @Test
@@ -91,6 +94,21 @@ class FeedbackReporterResourceTest {
                 .get("/reports/semanal?cursoId=")
                 .then()
                 .statusCode(400)
-                .body(equalTo("cursoId é obrigatório"));
+                .contentType(ContentType.JSON)
+                .body("message", equalTo("cursoId é obrigatório"));
+    }
+
+    @Test
+    void deveRetornarErroInternoQuandoServicoFalha() {
+        when(feedbackReportService.getRelatorioSemanalCurso(any(), any()))
+                .thenThrow(new RuntimeException("falha inesperada"));
+
+        given()
+                .when()
+                .get("/reports/semanal?cursoId=curso-123")
+                .then()
+                .statusCode(500)
+                .contentType(ContentType.JSON)
+                .body("message", equalTo("Erro ao gerar relatório semanal"));
     }
 }

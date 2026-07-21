@@ -20,20 +20,17 @@ import java.util.Optional;
 
 public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent> {
 
-    private static final Map<String, String> RESPONSE_HEADERS = Map.of(
-            "Content-Type", "application/json",
-            "Access-Control-Allow-Origin", "https://rafambrito.github.io",
-            "Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS",
-            "Access-Control-Allow-Headers", "Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token"
-    );
+    private static final String DEFAULT_ALLOWED_ORIGIN = "https://rafambrito.github.io";
 
     private final ObjectMapper objectMapper;
     private final FeedbackReportService feedbackReportService;
+    private final Map<String, String> responseHeaders;
 
     public ReporterLambdaHandler() {
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.responseHeaders = buildResponseHeaders(readEnv("AWS_ALLOWED_ORIGIN", DEFAULT_ALLOWED_ORIGIN));
         this.feedbackReportService = buildService();
     }
 
@@ -41,6 +38,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        this.responseHeaders = buildResponseHeaders(DEFAULT_ALLOWED_ORIGIN);
         this.feedbackReportService = feedbackReportService;
     }
 
@@ -147,14 +145,24 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
 
         return new APIGatewayProxyResponseEvent()
                 .withStatusCode(statusCode)
-                .withHeaders(RESPONSE_HEADERS)
+                .withHeaders(responseHeaders)
                 .withBody(body);
     }
 
     private APIGatewayProxyResponseEvent emptyResponse(int statusCode) {
         return new APIGatewayProxyResponseEvent()
                 .withStatusCode(statusCode)
-                .withHeaders(RESPONSE_HEADERS)
+                .withHeaders(responseHeaders)
                 .withBody("");
+    }
+
+    private Map<String, String> buildResponseHeaders(String allowedOrigin) {
+        String origin = (allowedOrigin == null || allowedOrigin.isBlank()) ? DEFAULT_ALLOWED_ORIGIN : allowedOrigin;
+        return Map.of(
+                "Content-Type", "application/json",
+                "Access-Control-Allow-Origin", origin,
+                "Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS",
+                "Access-Control-Allow-Headers", "Content-Type,Authorization,X-Amz-Date,X-Api-Key,X-Amz-Security-Token"
+        );
     }
 }
