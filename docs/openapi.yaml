@@ -174,7 +174,7 @@ paths:
           $ref: '#/components/responses/ForbiddenError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /reports/semanal:
+  /reports/weekly:
     get:
       tags:
         - Reports
@@ -182,7 +182,7 @@ paths:
       description: Gera um consolidado semanal por curso, opcionalmente filtrando por professor.
       operationId: getWeeklyCourseReport
       parameters:
-        - name: cursoId
+        - name: courseId
           in: query
           required: true
           description: Identificador do curso.
@@ -207,7 +207,7 @@ paths:
             text/plain:
               schema:
                 type: string
-              example: cursoId é obrigatório
+              example: courseId é obrigatório
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '403':
@@ -413,37 +413,36 @@ components:
     WeeklyCourseReportResponse:
       type: object
       properties:
-        cursoId:
+        courseId:
           type: string
         professorId:
           type: string
           nullable: true
         totalFeedbacks:
           type: integer
-        mediaNota:
+        averageNota:
           type: number
           format: double
-        quantidadeBaixa:
+        baixaCount:
           type: integer
           format: int64
-        quantidadeMedia:
+        mediaCount:
           type: integer
           format: int64
-        quantidadeAlta:
+        altaCount:
           type: integer
           format: int64
-        quantidadePorDia:
-          type: object
-          description: Quantidade de avaliacoes por dia no periodo semanal (UTC).
-          additionalProperties:
-            type: integer
-            format: int64
-        feedbacksPorProfessor:
+        feedbacksByDay:
           type: object
           additionalProperties:
             type: integer
             format: int64
-        geradoEm:
+        feedbacksByProfessor:
+          type: object
+          additionalProperties:
+            type: integer
+            format: int64
+        generatedAt:
           type: string
           format: date-time
     MessageResponse:
