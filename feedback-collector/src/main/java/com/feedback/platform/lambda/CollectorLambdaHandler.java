@@ -12,7 +12,7 @@ import com.feedback.platform.domain.Criticidade;
 import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.lambda.dto.AvaliacaoRequestDTO;
 import com.feedback.platform.lambda.dto.FeedbackRequestDTO;
-import com.feedback.platform.lambda.repository.LambdaFeedbackRepository;
+import com.feedback.platform.lambda.repository.RepositorioFeedbackLambda;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -50,7 +50,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
 
     private final ObjectMapper objectMapper;
     private final Validator validator;
-    private final LambdaFeedbackRepository repository;
+    private final RepositorioFeedbackLambda repository;
     private final SqsClient sqsClient;
     private final String notificationQueueUrl;
 
@@ -61,16 +61,16 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
 
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         this.validator = factory.getValidator();
-        this.repository = new LambdaFeedbackRepository();
+        this.repository = new RepositorioFeedbackLambda();
         this.sqsClient = buildSqsClient();
         this.notificationQueueUrl = readEnv("AWS_NOTIFICATION_QUEUE_URL", "");
     }
 
-    CollectorLambdaHandler(LambdaFeedbackRepository repository) {
+    CollectorLambdaHandler(RepositorioFeedbackLambda repository) {
         this(repository, null, "");
     }
 
-    CollectorLambdaHandler(LambdaFeedbackRepository repository, SqsClient sqsClient, String notificationQueueUrl) {
+    CollectorLambdaHandler(RepositorioFeedbackLambda repository, SqsClient sqsClient, String notificationQueueUrl) {
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -95,14 +95,14 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
             }
 
             if ("GET".equals(method)) {
-                return handleGetById(event, requestId, context);
+                return tratarConsultaPorId(event, requestId, context);
             }
 
             if (!"POST".equals(method)) {
                 return response(405, "Metodo nao suportado");
             }
 
-            String body = resolveBody(event);
+            String body = resolverCorpo(event);
             if (body == null || body.isBlank()) {
                 context.getLogger().log("[" + requestId + "] Payload vazio");
                 return response(400, "Payload de entrada é obrigatório");
@@ -119,8 +119,8 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
                 return response(400, details);
             }
 
-            LambdaFeedbackRepository.SavedFeedback feedback = repository.save(request, requestId);
-            publishToNotificationQueueIfUrgent(feedback, context, requestId);
+            RepositorioFeedbackLambda.FeedbackSalvo feedback = repository.salvar(request, requestId);
+            publicarNaFilaNotificacaoSeUrgente(feedback, context, requestId);
             context.getLogger().log("[" + requestId + "] Feedback persistido com sucesso");
             return response(201, "Feedback recebido com sucesso");
 
@@ -164,15 +164,15 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         throw new IllegalArgumentException(details);
     }
 
-    private APIGatewayProxyResponseEvent handleGetById(APIGatewayProxyRequestEvent event,
+    private APIGatewayProxyResponseEvent tratarConsultaPorId(APIGatewayProxyRequestEvent event,
                                                         String requestId,
                                                         Context context) throws JsonProcessingException {
-        String feedbackId = extractFeedbackId(event);
+        String feedbackId = extrairIdFeedback(event);
         if (feedbackId == null || feedbackId.isBlank()) {
             return response(400, "Parametro id é obrigatório");
         }
 
-        Map<String, AttributeValue> item = repository.findById(feedbackId);
+        Map<String, AttributeValue> item = repository.buscarPorId(feedbackId);
         if (item == null || item.isEmpty()) {
             context.getLogger().log("[" + requestId + "] Feedback nao encontrado: id=" + feedbackId);
             return response(404, "Feedback nao encontrado");
@@ -182,7 +182,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         return jsonResponse(200, payload);
     }
 
-    private String extractFeedbackId(APIGatewayProxyRequestEvent event) {
+    private String extrairIdFeedback(APIGatewayProxyRequestEvent event) {
         Map<String, String> pathParameters = event.getPathParameters();
         if (pathParameters != null && pathParameters.containsKey("id")) {
             return pathParameters.get("id");
@@ -229,7 +229,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         return Integer.parseInt(value.n());
     }
 
-    private String resolveBody(APIGatewayProxyRequestEvent event) {
+    private String resolverCorpo(APIGatewayProxyRequestEvent event) {
         String body = event.getBody();
         if (body == null || body.isBlank()) {
             return body;
@@ -246,7 +246,7 @@ public class CollectorLambdaHandler implements RequestHandler<APIGatewayProxyReq
         return jsonResponse(statusCode, Map.of("message", message));
     }
 
-    private void publishToNotificationQueueIfUrgent(LambdaFeedbackRepository.SavedFeedback feedback,
+    private void publicarNaFilaNotificacaoSeUrgente(RepositorioFeedbackLambda.FeedbackSalvo feedback,
                                                     Context context,
                                                     String requestId) {
         if (feedback.criticidade() != Criticidade.ALTA) {

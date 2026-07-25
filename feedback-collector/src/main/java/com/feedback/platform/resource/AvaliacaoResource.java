@@ -3,7 +3,7 @@ package com.feedback.platform.resource;
 import com.feedback.platform.dto.AvaliacaoRequestDTO;
 import com.feedback.platform.dto.FeedbackRequestDTO;
 import com.feedback.platform.dto.FeedbackResponseDTO;
-import com.feedback.platform.service.FeedbackService;
+import com.feedback.platform.service.ServicoFeedback;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Inject;
 import jakarta.validation.Valid;
@@ -24,10 +24,10 @@ public class AvaliacaoResource {
     private static final String DEFAULT_ALUNO_ID = "ALUNO-ANONIMO";
     private static final String DEFAULT_PROFESSOR_ID = "PROF-GERAL";
 
-    private final FeedbackService feedbackService;
+    private final ServicoFeedback feedbackService;
 
     @Inject
-    public AvaliacaoResource(FeedbackService feedbackService) {
+    public AvaliacaoResource(ServicoFeedback feedbackService) {
         this.feedbackService = feedbackService;
     }
 

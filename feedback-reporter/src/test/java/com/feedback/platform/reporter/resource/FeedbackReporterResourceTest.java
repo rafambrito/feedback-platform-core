@@ -1,7 +1,7 @@
 package com.feedback.platform.reporter.resource;
 
 import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
-import com.feedback.platform.reporter.service.FeedbackReportService;
+import com.feedback.platform.reporter.service.ServicoRelatorioFeedback;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -18,10 +18,10 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile(NoAuthTestProfile.class)
-class FeedbackReporterResourceTest {
+class RecursoRelatorioFeedbackTest {
 
     @InjectMock
-    FeedbackReportService feedbackReportService;
+    ServicoRelatorioFeedback feedbackReportService;
 
     @Test
     void deveRetornarRelatorioSemanalComSucesso() {
@@ -38,7 +38,7 @@ class FeedbackReporterResourceTest {
                 Instant.parse("2026-07-01T10:00:00Z")
         );
 
-        when(feedbackReportService.getRelatorioSemanalCurso("curso-123", null)).thenReturn(response);
+        when(feedbackReportService.obterRelatorioSemanalCurso("curso-123", null)).thenReturn(response);
 
         given()
                 .when()
@@ -69,7 +69,7 @@ class FeedbackReporterResourceTest {
                 Instant.parse("2026-07-01T10:00:00Z")
         );
 
-        when(feedbackReportService.getRelatorioSemanalCurso("curso-123", "prof-1")).thenReturn(response);
+        when(feedbackReportService.obterRelatorioSemanalCurso("curso-123", "prof-1")).thenReturn(response);
 
         given()
                 .when()
@@ -105,7 +105,7 @@ class FeedbackReporterResourceTest {
 
     @Test
     void deveRetornarErroInternoQuandoServicoFalha() {
-        when(feedbackReportService.getRelatorioSemanalCurso(any(), any()))
+        when(feedbackReportService.obterRelatorioSemanalCurso(any(), any()))
                 .thenThrow(new RuntimeException("falha inesperada"));
 
         given()

@@ -17,7 +17,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class EventBridgeEventPublisherTest {
+class PublicadorEventoEventBridgeTest {
 
     @Mock
     EventBridgeClient eventBridgeClient;
@@ -25,11 +25,11 @@ class EventBridgeEventPublisherTest {
     @Captor
     ArgumentCaptor<PutEventsRequest> requestCaptor;
 
-    EventBridgeEventPublisher publisher;
+    PublicadorEventoEventBridge publisher;
 
     @BeforeEach
     void setUp() {
-        publisher = new EventBridgeEventPublisher(eventBridgeClient, new ObjectMapper());
+        publisher = new PublicadorEventoEventBridge(eventBridgeClient, new ObjectMapper());
     }
 
     @Test
@@ -37,7 +37,7 @@ class EventBridgeEventPublisherTest {
         PutEventsResponse response = PutEventsResponse.builder().failedEntryCount(0).build();
         when(eventBridgeClient.putEvents(any(PutEventsRequest.class))).thenReturn(response);
 
-        publisher.publishCriticalFeedback("fb-1", "aluno-1", "prof-1");
+        publisher.publicarFeedbackCritico("fb-1", "aluno-1", "prof-1");
 
         verify(eventBridgeClient).putEvents(requestCaptor.capture());
         PutEventsRequest sent = requestCaptor.getValue();
@@ -58,7 +58,7 @@ class EventBridgeEventPublisherTest {
         PutEventsResponse response = PutEventsResponse.builder().failedEntryCount(1).build();
         when(eventBridgeClient.putEvents(any(PutEventsRequest.class))).thenReturn(response);
 
-        assertDoesNotThrow(() -> publisher.publishCriticalFeedback("fb-2", "a", "p"));
+        assertDoesNotThrow(() -> publisher.publicarFeedbackCritico("fb-2", "a", "p"));
         verify(eventBridgeClient).putEvents(any(PutEventsRequest.class));
     }
 
@@ -67,6 +67,6 @@ class EventBridgeEventPublisherTest {
         when(eventBridgeClient.putEvents(any(PutEventsRequest.class)))
                 .thenThrow(new RuntimeException("AWS indisponível"));
 
-        assertDoesNotThrow(() -> publisher.publishCriticalFeedback("fb-3", "a", "p"));
+        assertDoesNotThrow(() -> publisher.publicarFeedbackCritico("fb-3", "a", "p"));
     }
 }

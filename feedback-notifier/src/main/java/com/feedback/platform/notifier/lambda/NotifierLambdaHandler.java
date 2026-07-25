@@ -7,12 +7,12 @@ import com.amazonaws.services.lambda.runtime.events.SQSBatchResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.feedback.platform.notifier.repository.NotificationRepository;
-import com.feedback.platform.notifier.repository.NotificationSender;
-import com.feedback.platform.notifier.repository.dynamodb.DynamoDBNotificationRepository;
-import com.feedback.platform.notifier.repository.ses.SesNotificationSender;
-import com.feedback.platform.notifier.service.NotificationService;
-import com.feedback.platform.notifier.service.impl.NotificationServiceImpl;
+import com.feedback.platform.notifier.repository.RepositorioNotificacao;
+import com.feedback.platform.notifier.repository.EnviadorNotificacao;
+import com.feedback.platform.notifier.repository.dynamodb.RepositorioNotificacaoDynamoDB;
+import com.feedback.platform.notifier.repository.ses.EnviadorNotificacaoSes;
+import com.feedback.platform.notifier.service.ServicoNotificacao;
+import com.feedback.platform.notifier.service.impl.ServicoNotificacaoImpl;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
@@ -29,7 +29,7 @@ public class NotifierLambdaHandler implements RequestHandler<SQSEvent, SQSBatchR
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NotifierLambdaHandler.class);
 
-    private final NotificationService notificationService;
+    private final ServicoNotificacao notificationService;
 
     public NotifierLambdaHandler() {
         ObjectMapper objectMapper = new ObjectMapper()
@@ -38,7 +38,7 @@ public class NotifierLambdaHandler implements RequestHandler<SQSEvent, SQSBatchR
         this.notificationService = buildService(objectMapper);
     }
 
-    NotifierLambdaHandler(NotificationService notificationService) {
+    NotifierLambdaHandler(ServicoNotificacao notificationService) {
         this.notificationService = notificationService;
     }
 
@@ -70,7 +70,7 @@ public class NotifierLambdaHandler implements RequestHandler<SQSEvent, SQSBatchR
         return new SQSBatchResponse(failures);
     }
 
-    private NotificationService buildService(ObjectMapper mapper) {
+    private ServicoNotificacao buildService(ObjectMapper mapper) {
         ValidatorFactory factory = Validation.buildDefaultValidatorFactory();
         Validator validator = factory.getValidator();
 
@@ -90,10 +90,10 @@ public class NotifierLambdaHandler implements RequestHandler<SQSEvent, SQSBatchR
                 .region(Region.of(region))
                 .build();
 
-        NotificationRepository repository = new DynamoDBNotificationRepository(dynamoDbClient, tableName);
-        NotificationSender sender = new SesNotificationSender(sesClient, fromEmail, toEmailOverride);
+        RepositorioNotificacao repository = new RepositorioNotificacaoDynamoDB(dynamoDbClient, tableName);
+        EnviadorNotificacao sender = new EnviadorNotificacaoSes(sesClient, fromEmail, toEmailOverride);
 
-        return new NotificationServiceImpl(repository, sender, mapper, validator);
+        return new ServicoNotificacaoImpl(repository, sender, mapper, validator);
     }
 
     private String readEnv(String key, String defaultValue) {

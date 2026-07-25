@@ -1,7 +1,7 @@
 package com.feedback.platform.reporter.resource;
 
 import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
-import com.feedback.platform.reporter.service.FeedbackReportService;
+import com.feedback.platform.reporter.service.ServicoRelatorioFeedback;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -17,10 +17,10 @@ import static org.mockito.Mockito.when;
 
 @QuarkusTest
 @TestProfile(SecurityEnabledTestProfile.class)
-class FeedbackReporterResourceSecurityTest {
+class RecursoRelatorioFeedbackSegurancaTest {
 
     @InjectMock
-    FeedbackReportService feedbackReportService;
+    ServicoRelatorioFeedback feedbackReportService;
 
     @Test
     void semanal_semToken_retorna401() {
@@ -57,7 +57,7 @@ class FeedbackReporterResourceSecurityTest {
                 Map.of("prof-1", 1L),
                 Instant.parse("2026-07-01T10:00:00Z")
         );
-        when(feedbackReportService.getRelatorioSemanalCurso("curso-123", null)).thenReturn(response);
+        when(feedbackReportService.obterRelatorioSemanalCurso("curso-123", null)).thenReturn(response);
 
         given()
                 .header("Authorization", "Bearer " + SecurityEnabledTestProfile.TOKENS.generateValidToken())

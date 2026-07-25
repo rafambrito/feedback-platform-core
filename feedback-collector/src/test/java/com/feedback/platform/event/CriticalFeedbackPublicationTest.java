@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 class CriticalFeedbackPublicationTest {
 
     @InjectMock
-    EventPublisher eventPublisher;
+    PublicadorEvento eventPublisher;
 
     @BeforeEach
     void resetMocks() {
@@ -49,7 +49,7 @@ class CriticalFeedbackPublicationTest {
                 .statusCode(201)
                 .extract().path("id");
 
-        verify(eventPublisher).publishCriticalFeedback(eq(id), eq("ALUNO-EVT-1"), eq("PROF-EVT-1"));
+        verify(eventPublisher).publicarFeedbackCritico(eq(id), eq("ALUNO-EVT-1"), eq("PROF-EVT-1"));
     }
 
     @Test
@@ -70,6 +70,6 @@ class CriticalFeedbackPublicationTest {
                 .then()
                 .statusCode(201);
 
-        verify(eventPublisher, never()).publishCriticalFeedback(anyString(), anyString(), anyString());
+        verify(eventPublisher, never()).publicarFeedbackCritico(anyString(), anyString(), anyString());
     }
 }

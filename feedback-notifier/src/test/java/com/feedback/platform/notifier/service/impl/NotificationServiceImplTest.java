@@ -5,8 +5,8 @@ import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
-import com.feedback.platform.notifier.repository.NotificationSender;
-import com.feedback.platform.notifier.repository.NotificationRepository;
+import com.feedback.platform.notifier.repository.EnviadorNotificacao;
+import com.feedback.platform.notifier.repository.RepositorioNotificacao;
 import jakarta.validation.Validator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,13 +24,13 @@ import static org.mockito.Mockito.*;
 import java.util.Collections;
 
 @ExtendWith(MockitoExtension.class)
-class NotificationServiceImplTest {
+class ServicoNotificacaoImplTest {
 
     @Mock
-    private NotificationRepository repository;
+    private RepositorioNotificacao repository;
 
     @Mock
-    private NotificationSender notificationSender;
+    private EnviadorNotificacao notificationSender;
 
     @Mock
     private ObjectMapper objectMapper;
@@ -39,7 +39,7 @@ class NotificationServiceImplTest {
     private Validator validator;
 
     @InjectMocks
-    private NotificationServiceImpl service;
+    private ServicoNotificacaoImpl service;
 
     private UrgencyNotification validEvent;
 

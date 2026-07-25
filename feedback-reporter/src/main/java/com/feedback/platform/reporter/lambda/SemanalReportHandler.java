@@ -4,10 +4,10 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
 import com.amazonaws.services.lambda.runtime.events.ScheduledEvent;
 import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
-import com.feedback.platform.reporter.repository.FeedbackRepository;
-import com.feedback.platform.reporter.repository.dynamodb.DynamoDBFeedbackRepository;
-import com.feedback.platform.reporter.service.FeedbackReportService;
-import com.feedback.platform.reporter.service.impl.FeedbackReportServiceImpl;
+import com.feedback.platform.reporter.repository.RepositorioFeedback;
+import com.feedback.platform.reporter.repository.dynamodb.RepositorioFeedbackDynamoDB;
+import com.feedback.platform.reporter.service.ServicoRelatorioFeedback;
+import com.feedback.platform.reporter.service.impl.ServicoRelatorioFeedbackImpl;
 import com.feedback.platform.reporter.service.semanal.RelatorioSemanalSchedulerService;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
@@ -55,7 +55,7 @@ public class SemanalReportHandler implements RequestHandler<ScheduledEvent, Repo
         return response;
     }
 
-    private FeedbackReportService buildService() {
+    private ServicoRelatorioFeedback buildService() {
         String region = readEnv("AWS_REGION", readEnv("AWS_DEFAULT_REGION", "us-east-2"));
         String tableName = readEnv("AWS_DYNAMODB_TABLE", "FeedbackTable");
         String cursoGsi = readEnv("AWS_DYNAMODB_GSI_CURSO_NAME", "");
@@ -65,14 +65,14 @@ public class SemanalReportHandler implements RequestHandler<ScheduledEvent, Repo
                 .region(Region.of(region))
                 .build();
 
-        FeedbackRepository repository = new DynamoDBFeedbackRepository(
+        RepositorioFeedback repository = new RepositorioFeedbackDynamoDB(
                 dynamoDbClient,
                 tableName,
                 Optional.ofNullable(cursoGsi),
                 Optional.ofNullable(professorGsi)
         );
 
-        return new FeedbackReportServiceImpl(repository);
+        return new ServicoRelatorioFeedbackImpl(repository);
     }
 
     private String normalizeProfessorId(String professorId) {

@@ -2,7 +2,7 @@ package com.feedback.platform.resource;
 
 import com.feedback.platform.domain.Feedback;
 import com.feedback.platform.integration.DynamoDbLocalResource;
-import com.feedback.platform.repository.FeedbackRepository;
+import com.feedback.platform.repository.RepositorioFeedback;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -27,7 +27,7 @@ class FeedbackResourceTest {
 
     /** CDI bean real — usa o DynamoDbClient apontado para o container. */
     @Inject
-    FeedbackRepository feedbackRepository;
+    RepositorioFeedback feedbackRepository;
 
     // ------------------------------------------------------------------ //
     //  Cenário 1: POST com nota normal → 201 + registro no DynamoDB       //
@@ -54,7 +54,7 @@ class FeedbackResourceTest {
 
         assertNotNull(id, "Resposta deve conter o id gerado");
 
-        Feedback persisted = feedbackRepository.findById(id);
+        Feedback persisted = feedbackRepository.buscarPorId(id);
         assertNotNull(persisted, "Registro deve existir no DynamoDB");
         assertEquals("ALUNO-01", persisted.alunoId());
         assertEquals("CURSO-01", persisted.cursoId());

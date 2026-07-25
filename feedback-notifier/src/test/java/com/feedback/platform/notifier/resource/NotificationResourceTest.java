@@ -2,7 +2,7 @@ package com.feedback.platform.notifier.resource;
 
 import com.feedback.platform.dto.UrgencyNotification;
 import com.feedback.platform.notifier.domain.Notificacao;
-import com.feedback.platform.notifier.service.NotificationService;
+import com.feedback.platform.notifier.service.ServicoNotificacao;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.TestProfile;
@@ -21,7 +21,7 @@ import static org.mockito.Mockito.*;
 class NotificationResourceTest {
 
     @InjectMock
-    private NotificationService notificationService;
+    private ServicoNotificacao notificationService;
 
     @Test
     void testEnviarNotificacaoUrgente_Sucesso() {

@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.SQSEvent;
 import com.amazonaws.services.lambda.runtime.events.SQSBatchResponse;
-import com.feedback.platform.notifier.service.NotificationService;
+import com.feedback.platform.notifier.service.ServicoNotificacao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 class NotifierLambdaHandlerTest {
 
     @Mock
-    private NotificationService notificationService;
+    private ServicoNotificacao notificationService;
 
     @Mock
     private Context context;

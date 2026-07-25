@@ -4,9 +4,9 @@ import com.feedback.platform.domain.Criticidade;
 import com.feedback.platform.domain.Feedback;
 import com.feedback.platform.dto.FeedbackRequestDTO;
 import com.feedback.platform.dto.FeedbackResponseDTO;
-import com.feedback.platform.event.EventPublisher;
-import com.feedback.platform.repository.FeedbackRepository;
-import com.feedback.platform.service.impl.FeedbackServiceImpl;
+import com.feedback.platform.event.PublicadorEvento;
+import com.feedback.platform.repository.RepositorioFeedback;
+import com.feedback.platform.service.impl.ServicoFeedbackImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,16 +22,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class FeedbackServiceImplTest {
+class ServicoFeedbackImplTest {
 
     @Mock
-    FeedbackRepository repository;
+    RepositorioFeedback repository;
 
     @Mock
-    EventPublisher eventPublisher;
+    PublicadorEvento eventPublisher;
 
     @InjectMocks
-    FeedbackServiceImpl service;
+    ServicoFeedbackImpl service;
 
     @Captor
     ArgumentCaptor<Feedback> captor;
@@ -44,7 +44,7 @@ class FeedbackServiceImplTest {
 
         assertNotNull(response.id());
         assertEquals(5, response.nota());
-        verify(repository, times(1)).save(captor.capture());
+        verify(repository, times(1)).salvar(captor.capture());
         verifyNoInteractions(eventPublisher);
         Feedback saved = captor.getValue();
         assertEquals("c1", saved.cursoId());
@@ -54,7 +54,7 @@ class FeedbackServiceImplTest {
     @Test
     void erro_repositorio_propagado() {
         doThrow(new RuntimeException("db"))
-                .when(repository).save(any());
+                .when(repository).salvar(any());
 
         FeedbackRequestDTO request = new FeedbackRequestDTO("c1","a1","p1",7,"ok");
 
@@ -68,7 +68,7 @@ class FeedbackServiceImplTest {
         FeedbackRequestDTO low = new FeedbackRequestDTO("c1","a1","p1",2,"ruim");
         FeedbackResponseDTO rLow = service.processarFeedback(low);
         assertEquals(Criticidade.ALTA, rLow.criticidade());
-        verify(eventPublisher).publishCriticalFeedback(eq(rLow.id()), eq("a1"), eq("p1"));
+        verify(eventPublisher).publicarFeedbackCritico(eq(rLow.id()), eq("a1"), eq("p1"));
 
         FeedbackRequestDTO high = new FeedbackRequestDTO("c1","a1","p1",8,"bom");
         FeedbackResponseDTO rHigh = service.processarFeedback(high);
@@ -82,6 +82,6 @@ class FeedbackServiceImplTest {
         FeedbackResponseDTO response = service.processarFeedback(request);
 
         assertEquals(Criticidade.MEDIA, response.criticidade());
-        verify(eventPublisher, never()).publishCriticalFeedback(anyString(), anyString(), anyString());
+        verify(eventPublisher, never()).publicarFeedbackCritico(anyString(), anyString(), anyString());
     }
 }

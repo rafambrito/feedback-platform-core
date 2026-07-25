@@ -3,9 +3,9 @@ package com.feedback.platform.collector.service;
 import com.feedback.platform.domain.Feedback;
 import com.feedback.platform.dto.FeedbackRequestDTO;
 import com.feedback.platform.dto.FeedbackResponseDTO;
-import com.feedback.platform.event.EventPublisher;
-import com.feedback.platform.repository.FeedbackRepository;
-import com.feedback.platform.service.impl.FeedbackServiceImpl;
+import com.feedback.platform.event.PublicadorEvento;
+import com.feedback.platform.repository.RepositorioFeedback;
+import com.feedback.platform.service.impl.ServicoFeedbackImpl;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
@@ -13,30 +13,30 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class FeedbackServiceImplTest {
+class ServicoFeedbackImplTestColetor {
 
     @Test
     void createFeedback_shouldSaveAndReturnResponse() {
         List<Feedback> stored = new ArrayList<>();
-        FeedbackRepository repository = new FeedbackRepository() {
+        RepositorioFeedback repository = new RepositorioFeedback() {
             @Override
-            public void save(Feedback feedback) {
+            public void salvar(Feedback feedback) {
                 stored.add(feedback);
             }
 
             @Override
-            public Feedback findById(String id) {
+            public Feedback buscarPorId(String id) {
                 return null;
             }
         };
 
-        EventPublisher eventPublisher = new EventPublisher() {
+        PublicadorEvento eventPublisher = new PublicadorEvento() {
             @Override
-            public void publishCriticalFeedback(String feedbackId, String alunoId, String professorId) {
+            public void publicarFeedbackCritico(String feedbackId, String alunoId, String professorId) {
             }
         };
 
-        com.feedback.platform.service.FeedbackService service = new FeedbackServiceImpl(repository, eventPublisher);
+        com.feedback.platform.service.ServicoFeedback service = new ServicoFeedbackImpl(repository, eventPublisher);
 
         FeedbackRequestDTO request = new FeedbackRequestDTO("course-1", "student-1", "teacher-1", 5, "Precisa de melhoria urgente");
 

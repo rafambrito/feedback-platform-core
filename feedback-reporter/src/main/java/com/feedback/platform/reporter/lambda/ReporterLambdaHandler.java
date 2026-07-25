@@ -8,10 +8,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.feedback.platform.reporter.repository.FeedbackRepository;
-import com.feedback.platform.reporter.repository.dynamodb.DynamoDBFeedbackRepository;
-import com.feedback.platform.reporter.service.FeedbackReportService;
-import com.feedback.platform.reporter.service.impl.FeedbackReportServiceImpl;
+import com.feedback.platform.reporter.repository.RepositorioFeedback;
+import com.feedback.platform.reporter.repository.dynamodb.RepositorioFeedbackDynamoDB;
+import com.feedback.platform.reporter.service.ServicoRelatorioFeedback;
+import com.feedback.platform.reporter.service.impl.ServicoRelatorioFeedbackImpl;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 
@@ -25,7 +25,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
     private static final String WEEKLY_REPORT_LEGACY_PATH = "/reports/semanal";
 
     private final ObjectMapper objectMapper;
-    private final FeedbackReportService feedbackReportService;
+    private final ServicoRelatorioFeedback feedbackReportService;
     private final Map<String, String> responseHeaders;
 
     public ReporterLambdaHandler() {
@@ -36,7 +36,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
         this.feedbackReportService = buildService();
     }
 
-    ReporterLambdaHandler(FeedbackReportService feedbackReportService) {
+    ReporterLambdaHandler(ServicoRelatorioFeedback feedbackReportService) {
         this.objectMapper = new ObjectMapper()
                 .registerModule(new JavaTimeModule())
                 .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
@@ -66,7 +66,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
                 if (professorId == null || professorId.isBlank()) {
                     return response(400, Map.of("message", "professorId e obrigatorio"));
                 }
-                return response(200, feedbackReportService.getProfessorReport(professorId));
+                return response(200, feedbackReportService.obterRelatorioProfessor(professorId));
             }
 
             if (path.contains("/reports/curso/")) {
@@ -74,7 +74,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
                 if (cursoId == null || cursoId.isBlank()) {
                     return response(400, Map.of("message", "cursoId e obrigatorio"));
                 }
-                return response(200, feedbackReportService.getCursoReport(cursoId));
+                return response(200, feedbackReportService.obterRelatorioCurso(cursoId));
             }
 
             if (isWeeklyReportPath(path)) {
@@ -86,7 +86,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
                     return response(400, Map.of("message", "courseId e obrigatorio"));
                 }
 
-                return response(200, feedbackReportService.getRelatorioSemanalCurso(courseId, professorId));
+                return response(200, feedbackReportService.obterRelatorioSemanalCurso(courseId, professorId));
             }
 
             return response(404, Map.of("message", "Endpoint nao encontrado"));
@@ -96,7 +96,7 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
         }
     }
 
-    private FeedbackReportService buildService() {
+    private ServicoRelatorioFeedback buildService() {
         String region = readEnv("AWS_REGION", readEnv("AWS_DEFAULT_REGION", "us-east-2"));
         String tableName = readEnv("AWS_DYNAMODB_TABLE", "FeedbackTable");
         String cursoGsi = readEnv("AWS_DYNAMODB_GSI_CURSO_NAME", "");
@@ -106,14 +106,14 @@ public class ReporterLambdaHandler implements RequestHandler<APIGatewayProxyRequ
                 .region(Region.of(region))
                 .build();
 
-        FeedbackRepository repository = new DynamoDBFeedbackRepository(
+        RepositorioFeedback repository = new RepositorioFeedbackDynamoDB(
                 dynamoDbClient,
                 tableName,
                 Optional.ofNullable(cursoGsi),
                 Optional.ofNullable(professorGsi)
         );
 
-        return new FeedbackReportServiceImpl(repository);
+        return new ServicoRelatorioFeedbackImpl(repository);
     }
 
     private String readEnv(String key, String defaultValue) {

@@ -2,7 +2,7 @@ package com.feedback.platform.resource;
 
 import com.feedback.platform.domain.Criticidade;
 import com.feedback.platform.dto.FeedbackResponseDTO;
-import com.feedback.platform.service.FeedbackService;
+import com.feedback.platform.service.ServicoFeedback;
 import io.quarkus.test.InjectMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class FeedbackResourceSecurityTest {
 
   @InjectMock
-  FeedbackService feedbackService;
+  ServicoFeedback feedbackService;
 
     @Test
     void postFeedback_semToken_retorna401() {

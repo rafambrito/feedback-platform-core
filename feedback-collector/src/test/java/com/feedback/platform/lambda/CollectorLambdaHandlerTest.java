@@ -4,7 +4,7 @@ import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent;
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent;
-import com.feedback.platform.lambda.repository.LambdaFeedbackRepository;
+import com.feedback.platform.lambda.repository.RepositorioFeedbackLambda;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -19,10 +19,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CollectorLambdaHandlerTest {
+class ManipuladorLambdaColetorTest {
 
     @Mock
-    private LambdaFeedbackRepository repository;
+    private RepositorioFeedbackLambda repository;
 
     @Mock
     private Context context;
@@ -46,7 +46,7 @@ class CollectorLambdaHandlerTest {
                 .withPath("/feedback/272ea304-b9f6-45f2-b724-5e8a77b753e0")
                 .withPathParameters(Map.of("id", "272ea304-b9f6-45f2-b724-5e8a77b753e0"));
 
-        when(repository.findById("272ea304-b9f6-45f2-b724-5e8a77b753e0")).thenReturn(Map.of(
+        when(repository.buscarPorId("272ea304-b9f6-45f2-b724-5e8a77b753e0")).thenReturn(Map.of(
                 "id", AttributeValue.builder().s("272ea304-b9f6-45f2-b724-5e8a77b753e0").build(),
                 "cursoId", AttributeValue.builder().s("1TIA").build(),
                 "alunoId", AttributeValue.builder().s("aluno-001").build(),
@@ -70,7 +70,7 @@ class CollectorLambdaHandlerTest {
                 .withHttpMethod("GET")
                 .withPathParameters(Map.of("id", "nao-existe"));
 
-        when(repository.findById("nao-existe")).thenReturn(null);
+        when(repository.buscarPorId("nao-existe")).thenReturn(null);
 
         APIGatewayProxyResponseEvent response = handler.handleRequest(event, context);
 

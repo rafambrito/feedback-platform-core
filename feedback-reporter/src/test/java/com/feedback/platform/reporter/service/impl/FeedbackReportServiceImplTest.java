@@ -2,7 +2,7 @@ package com.feedback.platform.reporter.service.impl;
 
 import com.feedback.platform.reporter.domain.FeedbackRecord;
 import com.feedback.platform.reporter.dto.ReportSemanalResponseDTO;
-import com.feedback.platform.reporter.repository.FeedbackRepository;
+import com.feedback.platform.reporter.repository.RepositorioFeedback;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -18,13 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class FeedbackReportServiceImplTest {
+class ServicoRelatorioFeedbackImplTest {
 
     @Mock
-    private FeedbackRepository feedbackRepository;
+    private RepositorioFeedback feedbackRepository;
 
     @InjectMocks
-    private FeedbackReportServiceImpl feedbackReportService;
+    private ServicoRelatorioFeedbackImpl feedbackReportService;
 
     @Test
     void deveFiltrarApenasFeedbacksDaUltimaSemana() {
@@ -52,7 +52,7 @@ class FeedbackReportServiceImplTest {
 
             when(feedbackRepository.findByCursoId("curso-123")).thenReturn(List.of(recente, antigo));
 
-            ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
+            ReportSemanalResponseDTO response = feedbackReportService.obterRelatorioSemanalCurso("curso-123", null);
 
             assertEquals("curso-123", response.cursoId());
         assertEquals(1, response.totalFeedbacks());
@@ -80,7 +80,7 @@ class FeedbackReportServiceImplTest {
 
         when(feedbackRepository.findByCursoId("curso-123")).thenReturn(List.of(antigo));
 
-        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
+        ReportSemanalResponseDTO response = feedbackReportService.obterRelatorioSemanalCurso("curso-123", null);
 
         assertEquals(0, response.totalFeedbacks());
         assertEquals(0.0, response.mediaNota());
@@ -92,7 +92,7 @@ class FeedbackReportServiceImplTest {
     void deveRetornarZeroQuandoNaoExistemFeedbacks() {
         when(feedbackRepository.findByCursoId("curso-123")).thenReturn(List.of());
 
-        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", null);
+        ReportSemanalResponseDTO response = feedbackReportService.obterRelatorioSemanalCurso("curso-123", null);
 
         assertEquals(0, response.totalFeedbacks());
         assertTrue(response.quantidadePorDia().isEmpty());
@@ -107,7 +107,7 @@ class FeedbackReportServiceImplTest {
 
         when(feedbackRepository.findByCursoIdAndProfessorId("curso-123", "prof-1")).thenReturn(List.of(p1a, p1b));
 
-        ReportSemanalResponseDTO response = feedbackReportService.getRelatorioSemanalCurso("curso-123", "prof-1");
+        ReportSemanalResponseDTO response = feedbackReportService.obterRelatorioSemanalCurso("curso-123", "prof-1");
 
         assertEquals("prof-1", response.professorId());
         assertEquals(2, response.totalFeedbacks());
