@@ -86,7 +86,7 @@ echo "[E2E] Feedback criado: ${FEEDBACK_ID}. Aguardando notificação ENVIADA no
 FOUND_STATUS=""
 for _ in $(seq 1 30); do
   SCAN_OUTPUT="$(docker exec "${LOCALSTACK_CONTAINER}" awslocal dynamodb scan \
-    --table-name NotificacaoTable \
+    --table-name NotificationTable \
     --filter-expression 'feedbackId = :f' \
     --expression-attribute-values "{\":f\":{\"S\":\"${FEEDBACK_ID}\"}}" \
     --output json)"

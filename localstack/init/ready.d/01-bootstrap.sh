@@ -21,7 +21,7 @@ ensure_table() {
 }
 
 ensure_table "FeedbackTable"
-ensure_table "NotificacaoTable"
+ensure_table "NotificationTable"
 
 if ! ${AWS_CMD} sqs get-queue-url --queue-name "${DLQ_NAME}" >/dev/null 2>&1; then
   ${AWS_CMD} sqs create-queue --queue-name "${DLQ_NAME}" >/dev/null
@@ -47,4 +47,4 @@ ${AWS_CMD} events put-targets \
   --rule "${RULE_NAME}" \
   --targets "Id"="1","Arn"="${QUEUE_ARN}" >/dev/null
 
-echo "LocalStack bootstrap concluido: FeedbackTable, NotificacaoTable, EventBridge e filas SQS prontas."
+echo "LocalStack bootstrap concluido: FeedbackTable, NotificationTable, EventBridge e filas SQS prontas."

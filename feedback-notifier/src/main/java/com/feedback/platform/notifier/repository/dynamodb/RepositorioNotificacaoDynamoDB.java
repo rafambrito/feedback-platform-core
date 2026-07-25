@@ -24,7 +24,7 @@ public class RepositorioNotificacaoDynamoDB implements RepositorioNotificacao {
     @Inject
     public RepositorioNotificacaoDynamoDB(
             DynamoDbClient dynamoDbClient,
-            @ConfigProperty(name = "aws.dynamodb.notification-table", defaultValue = "NotificacaoTable")
+            @ConfigProperty(name = "aws.dynamodb.notification-table", defaultValue = "NotificationTable")
             String tableName) {
         this.dynamoDbClient = dynamoDbClient;
         this.tableName = tableName;

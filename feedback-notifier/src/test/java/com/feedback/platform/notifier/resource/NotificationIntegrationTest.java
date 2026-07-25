@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 @TestProfile(NoAuthTestProfile.class)
 class NotificationIntegrationTest {
 
-    private static final String TABLE_NAME = "NotificacaoTable";
+        private static final String TABLE_NAME = "NotificationTable";
 
     @Inject
     DynamoDbClient dynamoDbClient;

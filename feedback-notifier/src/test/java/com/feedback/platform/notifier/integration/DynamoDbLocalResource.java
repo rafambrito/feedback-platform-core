@@ -21,7 +21,7 @@ public class DynamoDbLocalResource implements QuarkusTestResourceLifecycleManage
 
     private static final String IMAGE = "amazon/dynamodb-local:2.5.4";
     private static final int DYNAMODB_PORT = 8000;
-    private static final String TABLE_NAME = "NotificacaoTable";
+    private static final String TABLE_NAME = "NotificationTable";
 
     private GenericContainer<?> dynamoDb;
 
