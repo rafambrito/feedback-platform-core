@@ -65,11 +65,19 @@ Parameters:
     Type: String
     Default: ""
     Description: Opcional. URL da fila SQS existente usada pelo collector para publicar mensagens.
+  EnableProfessorIdGsi:
+    Type: String
+    Default: "true"
+    AllowedValues:
+      - "true"
+      - "false"
+    Description: Controle de migracao para criar o GSI professorId-index em etapa separada quando necessario.
 
 Conditions:
   IsDev: !Equals [!Ref StageName, dev]
   UseExistingNotificationQueue: !Not [!Equals [!Ref ExistingNotificationQueueArn, ""]]
   CreateNotificationQueue: !Equals [!Ref ExistingNotificationQueueArn, ""]
+  CreateProfessorIdGsi: !Equals [!Ref EnableProfessorIdGsi, "true"]
 
 Globals:
   Function:
@@ -832,12 +840,15 @@ Resources:
               KeyType: HASH
           Projection:
             ProjectionType: ALL
-        - IndexName: professorId-index
-          KeySchema:
-            - AttributeName: professorId
-              KeyType: HASH
-          Projection:
-            ProjectionType: ALL
+        - !If
+          - CreateProfessorIdGsi
+          - IndexName: professorId-index
+            KeySchema:
+              - AttributeName: professorId
+                KeyType: HASH
+            Projection:
+              ProjectionType: ALL
+          - !Ref AWS::NoValue
 
   NotificationTable:
     Type: AWS::DynamoDB::Table

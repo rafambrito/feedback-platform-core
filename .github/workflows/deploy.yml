@@ -54,24 +54,82 @@ jobs:
         env:
           COGNITO_DEFAULT_ADMIN_PASSWORD: ${{ secrets.COGNITO_DEFAULT_ADMIN_PASSWORD }}
         run: |
-          set +e
-          sam deploy --no-confirm-changeset \
-            --stack-name feedback-platform \
-            --parameter-overrides "StageName=dev" "DefaultAdminPassword=$COGNITO_DEFAULT_ADMIN_PASSWORD" \
-            --capabilities CAPABILITY_IAM \
-            --resolve-s3 \
-            --region us-east-2
-          rc=$?
-          set -e
+          set -euo pipefail
 
-          if [ $rc -ne 0 ]; then
-            echo "SAM deploy failed. Latest CREATE_FAILED events:"
-            aws cloudformation describe-stack-events \
+          deploy_sam() {
+            set +e
+            sam deploy --no-confirm-changeset \
               --stack-name feedback-platform \
+              --parameter-overrides "$@" \
+              --capabilities CAPABILITY_IAM \
+              --resolve-s3 \
+              --region us-east-2
+            rc=$?
+            set -e
+
+            if [ $rc -ne 0 ]; then
+              echo "SAM deploy failed. Latest CREATE_FAILED events:"
+              aws cloudformation describe-stack-events \
+                --stack-name feedback-platform \
+                --region us-east-2 \
+                --query "StackEvents[?contains(ResourceStatus, 'FAILED')].[Timestamp,LogicalResourceId,ResourceType,ResourceStatusReason]" \
+                --output table || true
+              exit $rc
+            fi
+          }
+
+          stack_status=$(aws cloudformation describe-stacks \
+            --stack-name feedback-platform \
+            --region us-east-2 \
+            --query 'Stacks[0].StackStatus' \
+            --output text 2>/dev/null || true)
+
+          should_run_staged_gsi_migration=false
+
+          if [[ -n "$stack_status" && "$stack_status" != "None" ]]; then
+            feedback_table_name=$(aws cloudformation describe-stack-resource \
+              --stack-name feedback-platform \
+              --logical-resource-id FeedbackTable \
               --region us-east-2 \
-              --query "StackEvents[?contains(ResourceStatus, 'FAILED')].[Timestamp,LogicalResourceId,ResourceType,ResourceStatusReason]" \
-              --output table || true
-            exit $rc
+              --query 'StackResourceDetail.PhysicalResourceId' \
+              --output text 2>/dev/null || true)
+
+            if [[ -n "$feedback_table_name" && "$feedback_table_name" != "None" ]]; then
+              curso_gsi_count=$(aws dynamodb describe-table \
+                --table-name "$feedback_table_name" \
+                --region us-east-2 \
+                --query "length(Table.GlobalSecondaryIndexes[?IndexName=='cursoId-index'])" \
+                --output text 2>/dev/null || echo 0)
+
+              professor_gsi_count=$(aws dynamodb describe-table \
+                --table-name "$feedback_table_name" \
+                --region us-east-2 \
+                --query "length(Table.GlobalSecondaryIndexes[?IndexName=='professorId-index'])" \
+                --output text 2>/dev/null || echo 0)
+
+              if [[ "$curso_gsi_count" == "0" && "$professor_gsi_count" == "0" ]]; then
+                should_run_staged_gsi_migration=true
+              fi
+            fi
+          fi
+
+          if [[ "$should_run_staged_gsi_migration" == "true" ]]; then
+            echo "Executando deploy em duas fases para respeitar limite de 1 GSI por update em tabela DynamoDB existente."
+
+            deploy_sam \
+              "StageName=dev" \
+              "DefaultAdminPassword=$COGNITO_DEFAULT_ADMIN_PASSWORD" \
+              "EnableProfessorIdGsi=false"
+
+            deploy_sam \
+              "StageName=dev" \
+              "DefaultAdminPassword=$COGNITO_DEFAULT_ADMIN_PASSWORD" \
+              "EnableProfessorIdGsi=true"
+          else
+            deploy_sam \
+              "StageName=dev" \
+              "DefaultAdminPassword=$COGNITO_DEFAULT_ADMIN_PASSWORD" \
+              "EnableProfessorIdGsi=true"
           fi
 
   publish-docs:
