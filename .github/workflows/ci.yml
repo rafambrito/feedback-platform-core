@@ -11,9 +11,20 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+
+      - name: Run tests
+        run: mvn test
       
       - name: Build with Maven
-        run: mvn clean package
+        run: mvn clean package -DskipTests
+
+      - name: Publish Test Report
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: Maven Tests
+          path: '**/target/surefire-reports/*.xml'
+          reporter: java-junit
       
       - name: SAM Validate
         run: sam validate --template template.yaml --region us-east-2
