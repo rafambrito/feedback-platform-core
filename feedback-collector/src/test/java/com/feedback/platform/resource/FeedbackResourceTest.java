@@ -1,8 +1,10 @@
 package com.feedback.platform.resource;
 
 import com.feedback.platform.domain.Feedback;
+import com.feedback.platform.event.PublicadorEvento;
 import com.feedback.platform.integration.DynamoDbLocalResource;
 import com.feedback.platform.repository.RepositorioFeedback;
+import io.quarkus.test.InjectMock;
 import io.quarkus.test.common.QuarkusTestResource;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -13,6 +15,9 @@ import org.junit.jupiter.api.Test;
 import static io.restassured.RestAssured.given;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Teste de integração do fluxo completo: HTTP → Service → DynamoDB Local.
@@ -28,6 +33,9 @@ class FeedbackResourceTest {
     /** CDI bean real — usa o DynamoDbClient apontado para o container. */
     @Inject
     RepositorioFeedback feedbackRepository;
+
+        @InjectMock
+        PublicadorEvento publicadorEvento;
 
     // ------------------------------------------------------------------ //
     //  Cenário 1: POST com nota normal → 201 + registro no DynamoDB       //
@@ -80,6 +88,66 @@ class FeedbackResourceTest {
                 .statusCode(400)
                 .body("error_code", org.hamcrest.Matchers.equalTo("BAD_REQUEST"));
     }
+
+    @Test
+    void getFeedback_existente_retorna200_comDadosPersistidos() {
+        String id = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "cursoId": "CURSO-GET",
+                          "alunoId": "ALUNO-GET",
+                          "professorId": "PROF-GET",
+                          "nota": 9,
+                          "comentario": "Fluxo de consulta"
+                        }
+                        """)
+                .when()
+                .post("/feedback")
+                .then()
+                .statusCode(201)
+                .extract().path("id");
+
+        given()
+                .when()
+                .get("/feedback/" + id)
+                .then()
+                .statusCode(200)
+                .body("id", org.hamcrest.Matchers.equalTo(id))
+                .body("cursoId", org.hamcrest.Matchers.equalTo("CURSO-GET"))
+                .body("alunoId", org.hamcrest.Matchers.equalTo("ALUNO-GET"))
+                .body("professorId", org.hamcrest.Matchers.equalTo("PROF-GET"))
+                .body("nota", org.hamcrest.Matchers.equalTo(9))
+                .body("criticidade", org.hamcrest.Matchers.equalTo("BAIXA"));
+    }
+
+    @Test
+    void postFeedback_criticidadeAlta_publicaEventoEPersiste() {
+        String id = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "cursoId": "CURSO-ALTA",
+                          "alunoId": "ALUNO-ALTA",
+                          "professorId": "PROF-ALTA",
+                          "nota": 2,
+                          "comentario": "Aula crítica"
+                        }
+                        """)
+                .when()
+                .post("/feedback")
+                .then()
+                .statusCode(201)
+                .body("criticidade", org.hamcrest.Matchers.equalTo("ALTA"))
+                .extract().path("id");
+
+        Feedback persisted = feedbackRepository.buscarPorId(id);
+        assertNotNull(persisted, "Registro ALTA deve existir no DynamoDB");
+        assertEquals("ALTA", persisted.criticidade().name());
+
+        verify(publicadorEvento, times(1))
+                .publicarFeedbackCritico(anyString(), anyString(), anyString());
+        }
 
     @Test
     void getFeedback_inexistente_retorna404() {

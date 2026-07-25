@@ -818,9 +818,26 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: cursoId
+          AttributeType: S
+        - AttributeName: professorId
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+      GlobalSecondaryIndexes:
+        - IndexName: cursoId-index
+          KeySchema:
+            - AttributeName: cursoId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+        - IndexName: professorId-index
+          KeySchema:
+            - AttributeName: professorId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
   NotificationTable:
     Type: AWS::DynamoDB::Table
@@ -938,6 +955,8 @@ Resources:
       Environment:
         Variables:
           AWS_DYNAMODB_TABLE: !Ref FeedbackTable
+          AWS_DYNAMODB_GSI_CURSO_NAME: cursoId-index
+          AWS_DYNAMODB_GSI_PROFESSOR_NAME: professorId-index
       Policies:
         - Statement:
             - Effect: Allow
@@ -991,6 +1010,8 @@ Resources:
       Environment:
         Variables:
           AWS_DYNAMODB_TABLE: !Ref FeedbackTable
+          AWS_DYNAMODB_GSI_CURSO_NAME: cursoId-index
+          AWS_DYNAMODB_GSI_PROFESSOR_NAME: professorId-index
           AWS_WEEKLY_REPORT_COURSE_ID: !Ref WeeklyReportCourseId
           AWS_WEEKLY_REPORT_PROFESSOR_ID: !Ref WeeklyReportProfessorId
       Policies:
