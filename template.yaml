@@ -828,8 +828,11 @@ Resources:
           AttributeType: S
         - AttributeName: cursoId
           AttributeType: S
-        - AttributeName: professorId
-          AttributeType: S
+        - !If
+          - CreateProfessorIdGsi
+          - AttributeName: professorId
+            AttributeType: S
+          - !Ref AWS::NoValue
       KeySchema:
         - AttributeName: id
           KeyType: HASH
