@@ -40,29 +40,29 @@ A solução adota uma arquitetura **Serverless com processamento assíncrono**.
 Fluxo simplificado:
 
 ```text
-                        GitHub Actions
-                              │
-                              ▼
-                         AWS SAM Deploy
-                              │
-                              ▼
-                         Amazon API Gateway
-                              │
-               ┌──────────────┼──────────────┐
-                ▼              ▼
-           Feedback Collector  Reporter
-                │
-                ▼
-             Amazon DynamoDB
-                │
-                ▼
-               Amazon SQS
-                │
-                ▼
-           Feedback Notifier
-                │
-                ▼
-              Amazon SES
+                    GitHub Actions
+                           │
+                           ▼
+                     AWS SAM Deploy
+                           │
+                           ▼
+                   Amazon API Gateway
+                           │
+              ┌────────────┴────────────┐
+              ▼                         ▼
+      Feedback Collector             Reporter
+              │
+              ▼
+         Amazon DynamoDB
+              │
+              ▼
+           Amazon SQS
+              │
+              ▼
+       Feedback Notifier
+              │
+              ▼
+           Amazon SES
 ```
 
 ---
