@@ -1,0 +1,161 @@
+package com.feedback.platform.collector.resource;
+
+import com.feedback.platform.collector.domain.Feedback;
+import com.feedback.platform.collector.event.PublicadorEvento;
+import com.feedback.platform.collector.integration.DynamoDbLocalResource;
+import com.feedback.platform.collector.repository.RepositorioFeedback;
+import io.quarkus.test.InjectMock;
+import io.quarkus.test.common.QuarkusTestResource;
+import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.TestProfile;
+import io.restassured.http.ContentType;
+import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+
+import static io.restassured.RestAssured.given;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
+/**
+ * Teste de integração do fluxo completo: HTTP → Service → DynamoDB Local.
+ *
+ * O DynamoDbLocalResource inicia o container ANTES do boot do Quarkus e
+ * injeta o endpoint do container como 'aws.dynamodb.endpoint.override'.
+ */
+@QuarkusTest
+@QuarkusTestResource(DynamoDbLocalResource.class)
+@TestProfile(NoAuthTestProfile.class)
+class FeedbackResourceTest {
+
+    /** CDI bean real — usa o DynamoDbClient apontado para o container. */
+    @Inject
+    RepositorioFeedback feedbackRepository;
+
+        @InjectMock
+        PublicadorEvento publicadorEvento;
+
+    // ------------------------------------------------------------------ //
+    //  Cenário 1: POST com nota normal → 201 + registro no DynamoDB       //
+    // ------------------------------------------------------------------ //
+
+    @Test
+    void postFeedback_retorna201_e_persisteNoDynamoDB() {
+        String id = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "cursoId": "CURSO-01",
+                          "alunoId": "ALUNO-01",
+                          "professorId": "PROF-01",
+                          "nota": 7,
+                          "comentario": "Ótima aula"
+                        }
+                        """)
+                .when()
+                .post("/feedback")
+                .then()
+                .statusCode(201)
+                .extract().path("id");
+
+        assertNotNull(id, "Resposta deve conter o id gerado");
+
+        Feedback persisted = feedbackRepository.buscarPorId(id);
+        assertNotNull(persisted, "Registro deve existir no DynamoDB");
+        assertEquals("ALUNO-01", persisted.alunoId());
+        assertEquals("CURSO-01", persisted.cursoId());
+        assertEquals(7, persisted.nota());
+    }
+
+    @Test
+    void postFeedback_payloadInvalido_retorna400() {
+        given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "cursoId": "CURSO-03",
+                          "alunoId": "ALUNO-03",
+                          "professorId": "PROF-03",
+                          "nota": 11,
+                          "comentario": "Aula razoável"
+                        }
+                        """)
+                .when()
+                .post("/feedback")
+                .then()
+                .statusCode(400)
+                .body("error_code", org.hamcrest.Matchers.equalTo("BAD_REQUEST"));
+    }
+
+    @Test
+    void getFeedback_existente_retorna200_comDadosPersistidos() {
+        String id = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "cursoId": "CURSO-GET",
+                          "alunoId": "ALUNO-GET",
+                          "professorId": "PROF-GET",
+                          "nota": 9,
+                          "comentario": "Fluxo de consulta"
+                        }
+                        """)
+                .when()
+                .post("/feedback")
+                .then()
+                .statusCode(201)
+                .extract().path("id");
+
+        given()
+                .when()
+                .get("/feedback/" + id)
+                .then()
+                .statusCode(200)
+                .body("id", org.hamcrest.Matchers.equalTo(id))
+                .body("cursoId", org.hamcrest.Matchers.equalTo("CURSO-GET"))
+                .body("alunoId", org.hamcrest.Matchers.equalTo("ALUNO-GET"))
+                .body("professorId", org.hamcrest.Matchers.equalTo("PROF-GET"))
+                .body("nota", org.hamcrest.Matchers.equalTo(9))
+                .body("criticidade", org.hamcrest.Matchers.equalTo("BAIXA"));
+    }
+
+    @Test
+    void postFeedback_criticidadeAlta_publicaEventoEPersiste() {
+        String id = given()
+                .contentType(ContentType.JSON)
+                .body("""
+                        {
+                          "cursoId": "CURSO-ALTA",
+                          "alunoId": "ALUNO-ALTA",
+                          "professorId": "PROF-ALTA",
+                          "nota": 2,
+                          "comentario": "Aula crítica"
+                        }
+                        """)
+                .when()
+                .post("/feedback")
+                .then()
+                .statusCode(201)
+                .body("criticidade", org.hamcrest.Matchers.equalTo("ALTA"))
+                .extract().path("id");
+
+        Feedback persisted = feedbackRepository.buscarPorId(id);
+        assertNotNull(persisted, "Registro ALTA deve existir no DynamoDB");
+        assertEquals("ALTA", persisted.criticidade().name());
+
+        verify(publicadorEvento, times(1))
+                .publicarFeedbackCritico(anyString(), anyString(), anyString());
+        }
+
+    @Test
+    void getFeedback_inexistente_retorna404() {
+        given()
+                .when()
+                .get("/feedback/nao-existe")
+                .then()
+                .statusCode(404)
+                .body("error_code", org.hamcrest.Matchers.equalTo("NOT_FOUND"));
+    }
+}

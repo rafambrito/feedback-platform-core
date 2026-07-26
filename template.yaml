@@ -876,7 +876,7 @@ Resources:
       BuildMethod: makefile
     Properties:
       CodeUri: .
-      Handler: com.feedback.platform.lambda.CollectorLambdaHandler::handleRequest
+      Handler: com.feedback.platform.collector.lambda.CollectorLambdaHandler::handleRequest
       Environment:
         Variables:
           AWS_DYNAMODB_TABLE: !Ref FeedbackTable

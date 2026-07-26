@@ -1,12 +1,12 @@
 package com.feedback.platform.collector.service;
 
 import com.feedback.platform.domain.Criticidade;
-import com.feedback.platform.domain.Feedback;
+import com.feedback.platform.collector.domain.Feedback;
 import com.feedback.platform.dto.FeedbackRequestDTO;
 import com.feedback.platform.dto.FeedbackResponseDTO;
-import com.feedback.platform.event.PublicadorEvento;
-import com.feedback.platform.repository.RepositorioFeedback;
-import com.feedback.platform.service.impl.ServicoFeedbackImpl;
+import com.feedback.platform.collector.event.PublicadorEvento;
+import com.feedback.platform.collector.repository.RepositorioFeedback;
+import com.feedback.platform.collector.service.impl.ServicoFeedbackImpl;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
