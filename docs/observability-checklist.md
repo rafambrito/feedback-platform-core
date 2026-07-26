@@ -97,8 +97,3 @@ docker logs fiap4-feedback-reporter | head -n 20
 ```
 
 4. Confirmar presenca de request-id/trace-id em respostas de erro (401/404/500).
-
-## 5. Mapeamento para backlog
-
-- T15: padronizacao de logs JSON + correlacao por request-id (properties dos tres servicos).
-- T16: definicao do painel minimo de metricas e checklist operacional (este documento + README raiz).

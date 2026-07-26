@@ -19,6 +19,11 @@ A solução foi desenvolvida utilizando microsserviços, AWS Lambda e serviços 
 
 https://rafambrito.github.io/feedback-platform-core/
 
+Swagger local:
+
+- Collector: http://localhost:8080/swagger-ui/
+- Notifier: http://localhost:8081/swagger-ui/
+
 ### API (Ambiente DEV)
 
 Resolva a URL atual a partir dos outputs da stack ativa:
@@ -125,23 +130,26 @@ feedback-platform-core/
 ├── docker-compose.yml
 ├── template.yaml
 ├── openapi.yaml
+├── Makefile
 ├── docs/
 │   ├── index.html
 │   └── openapi.yaml
 ├── feedback-collector/
 ├── feedback-notifier/
-└── feedback-reporter/
+├── feedback-reporter/
+├── shared/
+├── scripts/
+├── localstack/
+└── sam-installation/
 ```
 
 ---
 
 # 📘 Documentação da API
 
-A API segue a especificação **OpenAPI 3**.
+A API segue a especificação **OpenAPI 3** e a documentação está disponível em:
 
-A documentação está disponível em:
-
-- Swagger UI
+- Swagger UI 📚
 - arquivo `openapi.yaml`
 
 A documentação contempla:
@@ -152,7 +160,6 @@ A documentação contempla:
 - responses
 - autenticação JWT
 - exemplos de requisição
-
 ---
 
 # 🔐 Autenticação
@@ -269,7 +276,7 @@ mvn clean install
 ## Subir o ambiente
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 O ambiente inicia:

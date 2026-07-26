@@ -22,7 +22,8 @@ services:
 
   feedback-collector:
     build:
-      context: ./feedback-collector
+      context: .
+      dockerfile: feedback-collector/Dockerfile
     container_name: fiap4-feedback-collector
     ports:
       - "8080:8080"
@@ -47,7 +48,8 @@ services:
 
   feedback-notifier:
     build:
-      context: ./feedback-notifier
+      context: .
+      dockerfile: feedback-notifier/Dockerfile
     container_name: fiap4-feedback-notifier
     ports:
       - "8081:8081"
@@ -74,7 +76,8 @@ services:
 
   feedback-reporter:
     build:
-      context: ./feedback-reporter
+      context: .
+      dockerfile: feedback-reporter/Dockerfile
     container_name: fiap4-feedback-reporter
     ports:
       - "8082:8082"
