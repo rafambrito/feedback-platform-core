@@ -1,7 +1,7 @@
 package com.feedback.platform.collector.lambda.repository;
 
 import com.feedback.platform.domain.Criticidade;
-import com.feedback.platform.collector.lambda.dto.FeedbackRequestDTO;
+import com.feedback.platform.dto.FeedbackRequestDTO;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;

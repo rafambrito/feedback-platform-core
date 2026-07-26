@@ -1,6 +1,6 @@
 package com.feedback.platform.collector.resource;
 
-import com.feedback.platform.collector.lambda.dto.AvaliacaoRequestDTO;
+import com.feedback.platform.dto.AvaliacaoRequestDTO;
 import com.feedback.platform.dto.FeedbackRequestDTO;
 import com.feedback.platform.dto.FeedbackResponseDTO;
 import com.feedback.platform.collector.service.ServicoFeedback;
