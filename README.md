@@ -19,11 +19,6 @@ A solução foi desenvolvida utilizando microsserviços, AWS Lambda e serviços 
 
 https://rafambrito.github.io/feedback-platform-core/
 
-Swagger local:
-
-- Collector: http://localhost:8080/swagger-ui/
-- Notifier: http://localhost:8081/swagger-ui/
-
 ### API (Ambiente DEV)
 
 Resolva a URL atual a partir dos outputs da stack ativa:
